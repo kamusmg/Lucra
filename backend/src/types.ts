@@ -374,12 +374,18 @@ export interface PerformanceMetrics {
 }
 
 // --- New types for Sentiment Analysis (Phase 3) ---
+export interface Narrative {
+  name: string;
+  impact: 'positive' | 'negative' | 'neutral';
+  explanation: string;
+}
+
 export interface SentimentAnalysis {
   assetTicker: string;
   sentimentScore: number; // 0-100, where 0 is very bearish, 50 is neutral, 100 is very bullish
   sentimentLabel: 'Muito Baixista' | 'Baixista' | 'Neutro' | 'Altista' | 'Muito Altista' | 'Very Bearish' | 'Bearish' | 'Neutral' | 'Bullish' | 'Very Bullish';
-  dominantNarratives: string[]; // e.g., ["AI Tokens", "Real World Assets (RWA)"]
-  summary: string;
+  dominantNarratives: Narrative[];
+  intelligenceBriefing: string;
 }
 
 // --- New types for Paper Trading (Phase 4.5) ---

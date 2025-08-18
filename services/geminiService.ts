@@ -1,6 +1,7 @@
 
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis } from '../types.ts';
+import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis, Narrative } from '../types.ts';
 import { LucraSignal } from '../types/lucra.ts';
 import { DateTime } from 'luxon';
 import { formatCurrency } from '../utils/formatters.ts';
@@ -258,16 +259,26 @@ const presentDayAnalysisSchema = {
     required: ["macroContext", "presentDayBuySignals", "presentDaySellSignals", "presentDayStrengths", "presentDayWeaknesses"],
 };
 
+const narrativeSchema = {
+    type: Type.OBJECT,
+    properties: {
+        name: { type: Type.STRING, description: "O nome da narrativa (ex: 'DePIN')." },
+        impact: { type: Type.STRING, enum: ['positive', 'negative', 'neutral'], description: "O impacto classificado da narrativa." },
+        explanation: { type: Type.STRING, description: "Explicação concisa da narrativa e sua relevância." },
+    },
+    required: ["name", "impact", "explanation"],
+};
+
 const sentimentAnalysisSchema = {
     type: Type.OBJECT,
     properties: {
         assetTicker: { type: Type.STRING },
         sentimentScore: { type: Type.NUMBER },
         sentimentLabel: { type: Type.STRING, enum: ['Muito Baixista', 'Baixista', 'Neutro', 'Altista', 'Muito Altista', 'Very Bearish', 'Bearish', 'Neutral', 'Bullish', 'Very Bullish'] },
-        dominantNarratives: { type: Type.ARRAY, items: { type: Type.STRING } },
-        summary: { type: Type.STRING },
+        dominantNarratives: { type: Type.ARRAY, items: narrativeSchema },
+        intelligenceBriefing: { type: Type.STRING, description: "Um parágrafo coeso que sintetiza a análise e seu impacto potencial no preço." },
     },
-    required: ["assetTicker", "sentimentScore", "sentimentLabel", "dominantNarratives", "summary"],
+    required: ["assetTicker", "sentimentScore", "sentimentLabel", "dominantNarratives", "intelligenceBriefing"],
 };
 
 /**
@@ -613,19 +624,21 @@ export const fetchMemeCoinAnalysis = async (): Promise<MemeCoinSignal[]> => {
 
 export const fetchSentimentAnalysis = async (assets: string[], language: 'pt' | 'en'): Promise<SentimentAnalysis[]> => {
     const prompt = `
-        **DIRETIVA: ANALISTA DE SENTIMENTO DE MERCADO**
-        Sua tarefa é agir como um analista de sentimento quantitativo. Para cada ativo na lista a seguir, você deve "vasculhar" fontes de dados públicas (X/Twitter, Reddit, portais de notícias cripto) e fornecer uma análise de sentimento concisa.
+        **DIRETIVA: BRIEFING DE INTELIGÊNCIA DE SENTIMENTO v2.0**
+        Sua tarefa é agir como um analista de inteligência de mercado. Para cada ativo, você deve fornecer uma análise de sentimento que explique o "porquê" e o "e daí?".
 
         **ATIVOS PARA ANÁLISE:** ${assets.join(', ')}
 
         **REGRAS DE ANÁLISE:**
-        1.  **Pontuação (sentimentScore):** Para cada ativo, forneça uma pontuação de 0 a 100, onde 0 é extremamente baixista (medo, pânico), 50 é neutro, e 100 é extremamente altista (euforia, ganância).
-        2.  **Rótulo (sentimentLabel):** Converta a pontuação em um rótulo: 0-19 (Muito Baixista), 20-39 (Baixista), 40-59 (Neutro), 60-79 (Altista), 80-100 (Muito Altista).
-        3.  **Narrativas (dominantNarratives):** Identifique as 2 ou 3 narrativas ou palavras-chave mais dominantes associadas ao ativo no momento. Ex: "AI Tokens", "DePIN", "Aprovação de ETF", "Airdrop Próximo".
-        4.  **Resumo (summary):** Escreva um resumo de uma frase explicando o porquê do sentimento atual. Ex: "O sentimento é altista devido à especulação sobre um novo airdrop e parcerias recentes."
-        5.  **IDIOMA:** A resposta final (labels, narrativas, summary) DEVE ser em ${language === 'pt' ? 'Português' : 'Inglês'}.
+        1.  **Pontuação e Rótulo (sentimentScore, sentimentLabel):** Forneça uma pontuação de 0 a 100 e o rótulo correspondente, como antes.
+        2.  **Narrativas Dominantes (dominantNarratives):** Para cada uma das 2-3 narrativas mais importantes, você DEVE fornecer:
+            -   **name:** O nome da narrativa (ex: "DePIN", "Aprovação de ETF").
+            -   **impact:** Classifique o impacto da narrativa como 'positive', 'negative', ou 'neutral' para o ativo.
+            -   **explanation:** Uma frase concisa explicando o que é a narrativa e por que ela é relevante para este ativo específico agora.
+        3.  **Briefing de Inteligência (intelligenceBriefing):** Este é o campo mais crítico. Em vez de um simples resumo, escreva um parágrafo coeso (2-3 frases) que sintetize a análise. Ele DEVE explicar como o sentimento geral e as narrativas combinadas podem impactar a ação de preço do ativo no curto prazo. Conecte os pontos para o usuário.
+        4.  **IDIOMA:** A resposta final (labels, narrativas, briefing) DEVE ser em ${language === 'pt' ? 'Português' : 'Inglês'}.
 
-        **OUTPUT:** Sua resposta DEVE ser um array JSON, onde cada objeto corresponde a um ativo e obedece estritamente ao schema \`SentimentAnalysis\`.
+        **OUTPUT:** Sua resposta DEVE ser um array JSON, onde cada objeto corresponde a um ativo e obedece estritamente ao schema \`SentimentAnalysis\` atualizado.
     `;
 
     try {

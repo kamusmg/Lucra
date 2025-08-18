@@ -309,7 +309,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             let signalsChanged = false;
             
             // 1. Manage Expiration: Remove signals older than 24 hours
-            const now = DateTime.local();
+            const now = DateTime.now();
             const freshSignals = currentPendingSignals.filter(signal => {
                 if (!signal || typeof signal.entryDatetime !== 'string') {
                     if (signal) console.warn('Pending signal found without string entryDatetime', signal);
@@ -513,7 +513,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                                 assetName: trade.assetName,
                                 signalType: trade.signalType,
                                 entryDatetime: trade.entryDatetime,
-                                exitDatetime: DateTime.local().toISO()!,
+                                exitDatetime: DateTime.now().toISO()!,
                                 entryPrice: trade.entryPrice,
                                 exitPrice: adjustedExitPrice,
                                 target: trade.target,

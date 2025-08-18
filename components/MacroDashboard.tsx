@@ -13,7 +13,7 @@ const statusConfig = {
         textColor: 'text-danger',
         borderColor: 'border-danger',
         baseColor: 'danger',
-        icon: <svg xmlns="http://www.w.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 100-2 1 1 0 000 2zm-1-4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
+        icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 100-2 1 1 0 000 2zm-1-4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" /></svg>
     },
     warning: {
         textColor: 'text-yellow-400',
@@ -45,14 +45,14 @@ const RegimeCard: React.FC<{ indicator: MacroIndicator }> = ({ indicator }) => {
     }[config.baseColor] || 'bg-blue-400/10';
 
     return (
-        <div className={`col-span-1 md:col-span-2 lg:col-span-4 bg-gradient-to-br from-primary/20 via-surface to-surface border-2 ${config.borderColor} rounded-lg p-6 shadow-lg flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left`}>
+        <div className={`col-span-full bg-gradient-to-br from-primary/20 via-surface to-surface border-2 ${config.borderColor} rounded-lg p-6 shadow-lg flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left`}>
             <div className={`flex-shrink-0 ${bgColorClass} p-4 rounded-full border-2 ${config.borderColor}`}>
-                <CompassIcon className={`h-12 w-12 ${config.textColor}`} />
+                <CompassIcon className={`h-16 w-16 ${config.textColor}`} />
             </div>
             <div>
-                <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">{indicator.name}</h3>
-                <p className={`text-3xl font-bold ${config.textColor} my-1`}>{indicator.value}</p>
-                <p className="text-sm text-text-secondary">{indicator.interpretation}</p>
+                <h3 className="text-base font-bold text-text-secondary uppercase tracking-wider">{indicator.name}</h3>
+                <p className={`text-4xl font-bold ${config.textColor} my-1`}>{indicator.value}</p>
+                <p className="text-base text-text-secondary">{indicator.interpretation}</p>
             </div>
         </div>
     );
@@ -73,9 +73,9 @@ const MacroDashboard: React.FC = () => {
     const regimeIndicator = macroContext.find(ind => ind.name.toLowerCase().includes('regime'));
     const otherIndicators = macroContext.filter(ind => !ind.name.toLowerCase().includes('regime'));
     
-    // Restore the logic to split indicators
-    const primaryIndicators = otherIndicators.slice(0, 3);
-    const secondaryIndicators = otherIndicators.slice(3);
+    // Display the top 4 indicators prominently, hide the rest.
+    const primaryIndicators = otherIndicators.slice(0, 4);
+    const secondaryIndicators = otherIndicators.slice(4);
 
     const renderIndicatorCard = (indicator: MacroIndicator, key: string | number) => {
         const config = statusConfig[indicator.status] || statusConfig.neutral;

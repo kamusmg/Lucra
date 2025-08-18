@@ -8,12 +8,14 @@ import { ApiKey } from '../types';
 import KeyIcon from './icons/KeyIcon';
 import TrashIcon from './icons/TrashIcon';
 import CheckIcon from './CheckIcon';
+import RotateCwIcon from './RotateCwIcon';
 
 const ApiKeyManager: React.FC = () => {
     const { 
         apiKeys, addApiKey, removeApiKey,
         totalCapital, setTotalCapital,
-        riskPercentage, setRiskPercentage
+        riskPercentage, setRiskPercentage,
+        runFullAnalysis, isRecalculating
     } = useData();
     const { language } = useLanguage();
     const t = translations[language];
@@ -100,6 +102,14 @@ const ApiKeyManager: React.FC = () => {
                             />
                         </div>
                     </div>
+                    <button
+                        onClick={() => runFullAnalysis()}
+                        disabled={isRecalculating}
+                        className="mt-4 w-full flex items-center justify-center gap-2 text-sm font-semibold bg-secondary text-white px-4 py-2 rounded-lg shadow-md hover:bg-opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-wait"
+                    >
+                        <RotateCwIcon className={`h-5 w-5 ${isRecalculating ? 'animate-spin' : ''}`} />
+                        {isRecalculating ? t.recalculatingButton : t.applyRiskRecalculate}
+                    </button>
                 </div>
 
                 {/* Add New Key Form */}

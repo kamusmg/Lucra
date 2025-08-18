@@ -11,6 +11,7 @@ import InfoTooltip from './InfoTooltip';
 import ClockIcon from './ClockIcon';
 import CheckCircleIcon from './icons/CheckCircleIcon';
 import CautionIcon from './CautionIcon';
+import { DateTime } from 'luxon';
 
 const StatusIndicator: React.FC<{ status: OrderStatus; details: string; t: any }> = ({ status, details, t }) => {
     const config: { [key in OrderStatus]: { icon: React.ReactNode; color: string; label: string; tooltip: string } } = {
@@ -52,7 +53,14 @@ const LivePositionsPanel: React.FC = () => {
     const { language } = useLanguage();
     const t = translations[language];
 
-    const sortedTrades = [...activeTrades].sort((a, b) => new Date(b.entryDatetime).getTime() - new Date(a.entryDatetime).getTime());
+    const sortedTrades = [...activeTrades].sort((a, b) => {
+        // Luxon is more reliable for specific formats than the native Date constructor
+        const dateA = DateTime.fromFormat(a.entryDatetime, 'dd/MM/yyyy HH:mm:ss');
+        const dateB = DateTime.fromFormat(b.entryDatetime, 'dd/MM/yyyy HH:mm:ss');
+        // Handle invalid dates just in case
+        if (!dateA.isValid || !dateB.isValid) return 0;
+        return dateB.toMillis() - dateA.toMillis();
+    });
 
     return (
         <div>

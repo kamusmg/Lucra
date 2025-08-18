@@ -98,7 +98,7 @@ export const translations = {
         sentimentAnalysisDescription: 'A IA analisa o sentimento predominante e as narrativas em redes sociais e notícias para os principais ativos.',
         sentimentScore: 'Pontuação de Sentimento',
         dominantNarratives: 'Narrativas Dominantes',
-        sentimentSummary: 'Resumo do Sentimento',
+        intelligenceBriefing: 'Briefing de Inteligência',
         noSentimentData: 'Não foi possível carregar os dados de sentimento.',
 
         // Notifications (Phase 4)
@@ -140,6 +140,7 @@ export const translations = {
         riskSettings: 'Configurações de Risco',
         totalCapital: 'Capital Total (USD)',
         riskPerTrade: 'Risco por Trade (%)',
+        applyRiskRecalculate: 'Aplicar e Recalcular',
 
 
         // Present Day Signal Card
@@ -384,7 +385,7 @@ export const translations = {
         sentimentAnalysisDescription: 'The AI analyzes prevailing sentiment and narratives across social media and news for major assets.',
         sentimentScore: 'Sentiment Score',
         dominantNarratives: 'Dominant Narratives',
-        sentimentSummary: 'Sentiment Summary',
+        intelligenceBriefing: 'Intelligence Briefing',
         noSentimentData: 'Could not load sentiment data.',
         
         // Notifications (Phase 4)
@@ -425,6 +426,7 @@ export const translations = {
         riskSettings: 'Risk Settings',
         totalCapital: 'Total Capital (USD)',
         riskPerTrade: 'Risk per Trade (%)',
+        applyRiskRecalculate: 'Apply & Recalculate',
 
 
         // Present Day Signal Card

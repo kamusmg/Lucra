@@ -4,8 +4,10 @@ import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { translations } from '../utils/translations';
-import { SentimentAnalysis } from '../types';
+import { SentimentAnalysis, Narrative } from '../types';
 import { ASSET_LOGOS as ALL_ASSET_LOGOS } from './MajorAssetSection.tsx';
+import TrendingUpIcon from './icons/TrendingUpIcon';
+import TrendingDownIcon from './icons/TrendingDownIcon';
 
 // Add missing logos for sentiment panel specifically
 const ASSET_LOGOS = {
@@ -30,12 +32,14 @@ const SentimentCardSkeleton: React.FC = () => (
                 <div className="h-4 w-24 bg-border rounded-md mt-1"></div>
             </div>
         </div>
-        <div className="h-12 w-full bg-border rounded-lg"></div>
-        <div className="h-4 w-1/3 bg-border rounded-md"></div>
-        <div className="flex flex-wrap gap-2">
-            <div className="h-5 w-16 bg-border rounded-full"></div>
-            <div className="h-5 w-20 bg-border rounded-full"></div>
+        <div className="h-3 w-full bg-border rounded-full my-3"></div>
+        <div className="space-y-3">
+            <div className="h-4 w-1/3 bg-border rounded-md"></div>
+            <div className="h-3 w-5/6 bg-border rounded-md"></div>
+            <div className="h-4 w-1/3 bg-border rounded-md"></div>
+            <div className="h-3 w-4/6 bg-border rounded-md"></div>
         </div>
+        <div className="h-12 w-full bg-border rounded-lg mt-3"></div>
         <Shimmer />
     </div>
 );
@@ -67,6 +71,12 @@ const SentimentMeter: React.FC<{ score: number; t: any }> = ({ score, t }) => {
     );
 };
 
+const ImpactIcon: React.FC<{ impact: 'positive' | 'negative' | 'neutral' }> = ({ impact }) => {
+    if (impact === 'positive') return <TrendingUpIcon className="h-4 w-4 text-success flex-shrink-0" />;
+    if (impact === 'negative') return <TrendingDownIcon className="h-4 w-4 text-danger flex-shrink-0" />;
+    return <span className="h-4 w-4 text-text-secondary font-bold flex-shrink-0 text-center">-</span>;
+};
+
 
 const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) => {
     const { language } = useLanguage();
@@ -94,17 +104,22 @@ const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) 
             
             <SentimentMeter score={analysis.sentimentScore} t={t} />
             
-            <p className="text-xs text-text-secondary italic my-3">"{analysis.summary}"</p>
+            <div className="space-y-3 my-3">
+                 <h5 className="text-xs font-bold text-text-secondary uppercase tracking-wider">{t.dominantNarratives}</h5>
+                 {analysis.dominantNarratives.map(narrative => (
+                     <div key={narrative.name} className="bg-background/50 p-2 rounded-md border-l-2 border-primary/50">
+                        <div className="flex items-center gap-2">
+                            <ImpactIcon impact={narrative.impact} />
+                            <span className="font-semibold text-sm text-white">{narrative.name}</span>
+                        </div>
+                        <p className="text-xs text-text-secondary mt-1 pl-6">{narrative.explanation}</p>
+                    </div>
+                ))}
+            </div>
 
             <div className="mt-auto pt-3 border-t border-border/50">
-                <h5 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">{t.dominantNarratives}</h5>
-                <div className="flex flex-wrap gap-2">
-                    {analysis.dominantNarratives.map(narrative => (
-                        <span key={narrative} className="px-2.5 py-1 text-xs font-semibold bg-primary/20 text-primary rounded-full">
-                            {narrative}
-                        </span>
-                    ))}
-                </div>
+                <h5 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">{t.intelligenceBriefing}</h5>
+                 <p className="text-sm text-text-secondary leading-relaxed">{analysis.intelligenceBriefing}</p>
             </div>
         </div>
     );
