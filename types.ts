@@ -392,7 +392,7 @@ export interface SentimentAnalysis {
 // --- New types for Notification System (Phase 4) ---
 export interface Notification {
   id: string; // Unique ID, e.g., `price_proximity_${assetName}_${timestamp}`
-  type: 'price_proximity' | 'new_top_signal';
+  type: 'price_proximity' | 'new_top_signal' | 'positions_opened';
   message: string;
   timestamp: string; // ISO string
   read: boolean;

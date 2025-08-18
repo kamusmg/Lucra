@@ -1,10 +1,12 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Notification } from '../types';
 import SparklesIcon from './SparklesIcon';
 import BellIcon from './icons/BellIcon';
 import XIcon from './icons/XIcon';
+import ActivityIcon from './icons/ActivityIcon';
 
 interface ToastProps {
     notification: Notification;
@@ -29,7 +31,18 @@ const Toast: React.FC<ToastProps> = ({ notification, onDismiss }) => {
          setTimeout(() => onDismiss(notification.id), 300);
     }
 
-    const Icon = notification.type === 'new_top_signal' ? SparklesIcon : BellIcon;
+    const getIcon = () => {
+        switch(notification.type) {
+            case 'new_top_signal':
+                return SparklesIcon;
+            case 'positions_opened':
+                return ActivityIcon;
+            case 'price_proximity':
+            default:
+                return BellIcon;
+        }
+    }
+    const Icon = getIcon();
 
     return (
         <div

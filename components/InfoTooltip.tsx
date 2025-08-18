@@ -1,8 +1,9 @@
+
 import React from 'react';
 
 interface InfoTooltipProps {
   text: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const InfoIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -13,11 +14,8 @@ const InfoIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 const InfoTooltip: React.FC<InfoTooltipProps> = ({ text, children }) => {
   return (
-    <div className="relative flex items-center group">
-      {children}
-      <div className="ml-1.5 cursor-help">
-        <InfoIcon className="h-4 w-4 text-text-secondary/60 group-hover:text-primary transition-colors" />
-      </div>
+    <div className="relative inline-flex items-center align-middle group cursor-help">
+      {children ?? <InfoIcon className="h-4 w-4 text-text-secondary/60 group-hover:text-primary transition-colors" />}
       <div 
         className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-[var(--tooltip-bg)] text-[var(--tooltip-text)] text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10"
         role="tooltip"

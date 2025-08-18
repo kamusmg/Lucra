@@ -1,5 +1,6 @@
 
 
+
 import React, { createContext, useState, useEffect, useCallback, useContext, ReactNode, useRef } from 'react';
 import { PresentDayAssetSignal, LivePrices, BacktestAnalysisResult, PresentDayAnalysisResult, MemeCoinSignal, CompletedTrade, SentimentAnalysis, Notification, ActiveTrade, ApiKey, OrderStatus } from '../types.ts';
 import { ApiClient } from '../services/api/client.ts';
@@ -134,6 +135,9 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
 
     const [loadedHorizons, setLoadedHorizons] = useState(new Set<HorizonKey>(['24h']));
     const [horizonsLoading, setHorizonsLoading] = useState<{[key in HorizonKey]?: boolean}>({});
+    
+    const pendingSignalsRef = useRef(pendingSignals);
+    pendingSignalsRef.current = pendingSignals;
 
     useEffect(() => {
         const savedHistory = localStorage.getItem(SIGNAL_HISTORY_KEY);
@@ -162,7 +166,12 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
         }
         const savedPending = localStorage.getItem(PENDING_SIGNALS_KEY);
         if (savedPending) {
-            try { setPendingSignals(JSON.parse(savedPending)); } catch (e) { console.error("Failed to parse pending signals", e); }
+            try { 
+                const parsed = JSON.parse(savedPending);
+                if (Array.isArray(parsed)) {
+                    setPendingSignals(parsed); 
+                }
+            } catch (e) { console.error("Failed to parse pending signals", e); }
         }
         const savedCapital = localStorage.getItem(TOTAL_CAPITAL_KEY);
         if (savedCapital) {
@@ -212,7 +221,6 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
         setIsRecalculating(true);
         setError(null);
         try {
-            setBacktestData(null);
             
             const majorAssetsForSentiment = ['BTC', 'ETH', 'SOL', 'DOGE', 'SHIB', 'PEPE', 'WIF'];
             
@@ -239,18 +247,15 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             const allNewSignals = [...presentDay.presentDayBuySignals, ...presentDay.presentDaySellSignals]
                 .filter(signal => signal.signalType !== 'NEUTRO');
 
-            setPendingSignals(prev => {
-                // Prevent adding duplicates if analysis is re-run with same signals
-                const existingSignalIds = new Set(prev.map(s => `${s.assetName}-${s.entryDatetime}`));
-                const uniqueNewSignals = allNewSignals.filter(s => !existingSignalIds.has(`${s.assetName}-${s.entryDatetime}`));
-                
-                if (uniqueNewSignals.length > 0) {
-                    const updatedSignals = [...prev, ...uniqueNewSignals];
-                    localStorage.setItem(PENDING_SIGNALS_KEY, JSON.stringify(updatedSignals));
-                    return updatedSignals;
-                }
-                return prev;
-            });
+            const currentPending = pendingSignalsRef.current;
+            const existingSignalIds = new Set(currentPending.map(s => `${s.assetName}-${s.entryDatetime}`));
+            const uniqueNewSignals = allNewSignals.filter(s => !existingSignalIds.has(`${s.assetName}-${s.entryDatetime}`));
+            
+            if (uniqueNewSignals.length > 0) {
+                const updatedSignals = [...currentPending, ...uniqueNewSignals];
+                setPendingSignals(updatedSignals);
+                localStorage.setItem(PENDING_SIGNALS_KEY, JSON.stringify(updatedSignals));
+            }
 
             // Set other data
             setPresentDayData(presentDay);
@@ -296,9 +301,6 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
     }, [activeTrades, t.tooltipFilled]);
 
     // NEW: Trigger Engine for Pending Signals
-    const pendingSignalsRef = useRef<PresentDayAssetSignal[]>();
-    pendingSignalsRef.current = pendingSignals;
-
     useEffect(() => {
         const triggerInterval = setInterval(async () => {
             const currentPendingSignals = pendingSignalsRef.current;
@@ -309,7 +311,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             let signalsChanged = false;
             
             // 1. Manage Expiration: Remove signals older than 24 hours
-            const now = DateTime.local();
+            const now = DateTime.now();
             const freshSignals = currentPendingSignals.filter(signal => {
                 if (!signal || typeof signal.entryDatetime !== 'string') {
                     if (signal) console.warn('Pending signal found without string entryDatetime', signal);
@@ -386,6 +388,10 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                 // 3. Update states if anything changed
                 if (signalsChanged) {
                     if (newActiveTrades.length > 0) {
+                        addNotification({
+                            type: 'positions_opened',
+                            message: t.newPositionsOpenedAlert.replace('{count}', String(newActiveTrades.length)),
+                        });
                         setActiveTrades(prev => {
                             const updatedTrades = [...prev, ...newActiveTrades];
                             localStorage.setItem(ACTIVE_TRADES_KEY, JSON.stringify(updatedTrades));
@@ -403,7 +409,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
         }, 20000); // Check every 20 seconds
 
         return () => clearInterval(triggerInterval);
-    }, [apiClient, t]);
+    }, [apiClient, t, addNotification]);
 
 
     // Phase 4.5: Live monitoring of active paper trades with fees and slippage
@@ -586,7 +592,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                     const recentNotification = notifications.find(n => 
                         n.assetName === signal.assetName &&
                         n.type === 'price_proximity' &&
-                        DateTime.fromISO(n.timestamp).diffNow('hours').as('hours') > -1 // Check if notified in the last hour
+                        DateTime.fromISO(n.timestamp).diffNow(['hours']).hours > -1 // Check if notified in the last hour
                     );
                     if (!recentNotification) {
                         addNotification({

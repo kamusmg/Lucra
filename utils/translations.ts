@@ -1,4 +1,3 @@
-
 export const translations = {
     pt: {
         // General
@@ -112,6 +111,8 @@ export const translations = {
         clearAll: 'Limpar tudo',
         priceProximityAlert: '{assetName} está se aproximando do preço de entrada.',
         newTopSignalAlert: 'Novo Sinal de Destaque identificado para {assetName}!',
+        newPositionsOpenedAlert: 'Foram abertas {count} novas posições de paper trading.',
+
 
         // Live Positions Panel (Phase 4.5)
         livePositionsDescription: 'Monitoramento em tempo real de todas as operações virtuais ativas. As posições são abertas automaticamente com base nos "Sinais do Dia" e fechadas quando atingem o alvo ou o stop.',
@@ -125,7 +126,7 @@ export const translations = {
         statusFilled: 'Preenchida',
         statusError: 'Erro',
         tooltipPending: 'Aguardando simulação de execução. O sistema está verificando as chaves de API.',
-        tooltipFilled: 'Ordem de paper trading simulada e preenchida com sucesso.',
+        tooltipFilled: 'Ordem simulada e preenchida.',
         tooltipError: 'Falha na execução. Verifique se uma chave de API da Binance está configurada corretamente.',
 
 
@@ -402,6 +403,7 @@ export const translations = {
         clearAll: 'Clear all',
         priceProximityAlert: '{assetName} is approaching its entry price.',
         newTopSignalAlert: 'New Top Signal identified for {assetName}!',
+        newPositionsOpenedAlert: '{count} new paper trading positions have been opened.',
 
         // Live Positions Panel (Phase 4.5)
         livePositionsDescription: 'Real-time monitoring of all active virtual trades. Positions are opened automatically based on "Signals of the Day" and closed when they hit their target or stop.',
@@ -415,7 +417,7 @@ export const translations = {
         statusFilled: 'Filled',
         statusError: 'Error',
         tooltipPending: 'Awaiting execution simulation. The system is checking for API keys.',
-        tooltipFilled: 'Paper trading order successfully simulated and filled.',
+        tooltipFilled: 'Simulated order filled.',
         tooltipError: 'Execution failed. Check if a Binance API key is configured correctly.',
 
         // API Key Management (Phase 4.5, Pillar 2)

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -91,18 +90,18 @@ const LivePositionsPanel: React.FC = () => {
                     <table className="w-full text-sm text-left">
                         <thead className="sticky top-0 bg-surface z-10">
                             <tr>
-                                <th className="p-3 font-semibold text-text-secondary uppercase">{t.asset}</th>
-                                <th className="p-3 font-semibold text-text-secondary uppercase">{t.orderStatus}</th>
-                                <th className="p-3 font-semibold text-text-secondary uppercase text-right">{t.entryPrice}</th>
-                                <th className="p-3 font-semibold text-text-secondary uppercase text-right">{t.currentPrice}</th>
-                                <th className="p-3 font-semibold text-text-secondary uppercase text-right">{t.target}</th>
-                                <th className="p-3 font-semibold text-text-secondary uppercase text-right">{t.stopLoss}</th>
-                                <th className="p-3 font-semibold text-text-secondary uppercase text-right">
+                                <th className="px-2 py-3 font-semibold text-text-secondary uppercase">{t.asset}</th>
+                                <th className="px-2 py-3 font-semibold text-text-secondary uppercase">{t.orderStatus}</th>
+                                <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">{t.entryPrice}</th>
+                                <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">{t.currentPrice}</th>
+                                <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">{t.target}</th>
+                                <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">{t.stopLoss}</th>
+                                <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">
                                     <InfoTooltip text={t.tooltipPnlNet}>
                                         <span>{t.pnlNet} (USD)</span>
                                     </InfoTooltip>
                                 </th>
-                                <th className="p-3 font-semibold text-text-secondary uppercase text-right">
+                                <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">
                                      <InfoTooltip text={t.tooltipPnlNet}>
                                         <span>{t.pnlNet} (%)</span>
                                     </InfoTooltip>
@@ -115,21 +114,21 @@ const LivePositionsPanel: React.FC = () => {
                                 const isBuy = trade.signalType === 'COMPRA';
                                 return (
                                     <tr key={trade.id} className="border-t border-border/50 hover:bg-border/50">
-                                        <td className="p-3 font-semibold text-white">
+                                        <td className="px-2 py-3 font-semibold text-white">
                                             {trade.assetName}
                                             <span className={`ml-2 text-xs font-bold ${isBuy ? 'text-success' : 'text-danger'}`}>
                                                 ({isBuy ? 'LONG' : 'SHORT'})
                                             </span>
                                         </td>
-                                        <td className="p-3">
+                                        <td className="px-2 py-3">
                                             <StatusIndicator status={trade.orderStatus} details={trade.executionDetails} t={t} />
                                         </td>
-                                        <td className="p-3 font-mono text-right text-text-secondary">{formatCurrency(trade.entryPrice)}</td>
-                                        <td className="p-3 font-mono text-right text-white font-semibold">{formatCurrency(trade.currentPrice)}</td>
-                                        <td className="p-3 font-mono text-right text-green-400">{trade.target}</td>
-                                        <td className="p-3 font-mono text-right text-red-400">{trade.stopLoss}</td>
-                                        <td className={`p-3 font-mono text-right font-bold ${pnlColor}`}>{formatCurrency(trade.livePnlUsd)}</td>
-                                        <td className={`p-3 font-mono text-right font-bold ${pnlColor}`}>{formatPercentage(trade.livePnlPercentage, true)}</td>
+                                        <td className="px-2 py-3 font-mono text-right text-text-secondary">{formatCurrency(trade.entryPrice)}</td>
+                                        <td className="px-2 py-3 font-mono text-right text-white font-semibold">{formatCurrency(trade.currentPrice)}</td>
+                                        <td className="px-2 py-3 font-mono text-right text-green-400">{trade.target}</td>
+                                        <td className="px-2 py-3 font-mono text-right text-red-400">{trade.stopLoss}</td>
+                                        <td className={`px-2 py-3 font-mono text-right font-bold ${pnlColor}`}>{formatCurrency(trade.livePnlUsd)}</td>
+                                        <td className={`px-2 py-3 font-mono text-right font-bold ${pnlColor}`}>{formatPercentage(trade.livePnlPercentage, true)}</td>
                                     </tr>
                                 );
                             })}

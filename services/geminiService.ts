@@ -1,6 +1,8 @@
 
 
 
+
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis, Narrative } from '../types.ts';
 import { LucraSignal } from '../types/lucra.ts';
@@ -346,6 +348,8 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
         **PASSO 5: IDENTIFICAR O SINAL DE ELITE**
         - Após gerar todos os sinais de um universo que INCLUI ativos principais e altcoins, sua tarefa mais crítica é comparar TODAS as oportunidades geradas. Identifique a ÚNICA oportunidade que oferece a melhor confluência de fatores e o alinhamento mais claro com o regime de mercado. Defina o campo isTopSignal dessa oportunidade como true. Todas as outras, sem exceção, devem ter isTopSignal: false.
 
+        **DIRETIVA DE CONSTRUÇÃO DE PORTFÓLIO DE SINAIS:** Ao gerar a lista final de 4 sinais de COMPRA e 4 de VENDA, você deve garantir diversidade. A composição deve ser a seguinte: No mínimo 2 dos 4 slots de cada lado (COMPRA/VENDA) devem ser alocados para ativos fora do top 10 de capitalização de mercado (exclua BTC, ETH, SOL, BNB, XRP, ADA, etc. desses 2 slots). Os outros 2 slots podem ser preenchidos com os melhores setups encontrados, independentemente do ativo. O 'SINAL DE ELITE' ainda deve ser o melhor sinal geral, não importa a categoria.
+
         // --- DIRETIVAS DE EXECUÇÃO E CONTEXTO ---
         **DIRETIVA CRÍTICA DE OPERAÇÃO EM TEMPO REAL (REGRA INVIOLÁVEL E PRIORITÁRIA)**
         1. PREÇO REAL: Seus cálculos DEVEM se basear em preços REALISTAS E ATUAIS da Binance.
@@ -482,21 +486,51 @@ export const fetchNewSignalsForHorizon = async (
     const formattedDate = serverTime.toFormat('dd/MM/yyyy HH:mm:ss');
     const currentYear = serverTime.year;
 
-    const realTimeDirective = `
+    const prompt = `
+**DIRETIVA MESTRA DE ANÁLISE ADAPTATIVA v8.0**
+Sua identidade é Alpha. Sua tarefa é gerar um conjunto de sinais de trading de alta qualidade para o horizonte de tempo "${horizon}", agindo como um trader quantitativo que se adapta às condições de mercado.
+
+**PROCESSO OBRIGATÓRIO (EM ORDEM):**
+
+**PASSO 1: DETERMINAR O REGIME DE MERCADO**
+${marketRegimeDirective}
+- Sua primeira ação é analisar o mercado e definir o "Regime de Mercado Atual".
+
+**PASSO 2: APLICAR GESTÃO DE RISCO ADAPTATIVA**
+${adaptiveRiskDirective}
+- Com base no regime, você DEVE ajustar seus parâmetros de risco para os sinais que irá gerar. Esta diretiva é prioritária.
+
+**PASSO 3: APLICAR O PLAYBOOK DE ESTRATÉGIA CORRETO**
+${strategyPlaybooksDirective}
+- Com base no regime definido, você DEVE aplicar o playbook correspondente para gerar TODOS os sinais.
+
+**PASSO 4: GERAR SINAIS COM ANÁLISE COMPLETA E VALIDAÇÃO DE RISCO**
+${riskManagementDirective} 
+${dceDirective}
+${fundamentalAnalysisDirective}
+${structuredDriversDirective}
+- **REGRAS DE GERAÇÃO:**
+    - Gere EXATAMENTE ${count} sinais de ${side} para o horizonte "${horizon}".
+    - O universo de análise é UNIFICADO e pode incluir tanto ativos principais quanto altcoins.
+    - Ativos a serem evitados: ${excludeAssets.join(', ')}.
+    - CADA SINAL DEVE respeitar as regras de Risco Adaptativo do Passo 2.
+    - O campo 'isTopSignal' DEVE ser 'false' para todos.
+    - Gere apenas sinais de ${side}, NUNCA 'NEUTRO'.
+
+**PASSO 4.5: CALCULAR DIMENSIONAMENTO DE POSIÇÃO (PADRÃO)**
+- Para cada sinal gerado, calcule 'recommendedPositionSize' e 'riskPerTrade' com base em um capital padrão de $10,000 e risco de 1%.
+
+// --- DIRETIVAS DE EXECUÇÃO E CONTEXTO ---
 **DIRETIVA CRÍTICA DE OPERAÇÃO EM TEMPO REAL (REGRA INVIOLÁVEL E PRIORITÁRIA)**
 1. PREÇO REAL: Seus cálculos DEVEM se basear em preços REALISTAS E ATUAIS da Binance.
 2. DATA REAL: O ano atual é ${currentYear}. O 'entryDatetime' DEVE ser a data e hora atuais (${formattedDate}). O 'exitDatetime' deve ser calculado a partir desta data.
 ---
-`;
 
-    const prompt = `Gere EXATAMENTE ${count} sinais de ${side} para o horizonte "${horizon}".
-${realTimeDirective}
-${riskManagementDirective}
-${structuredDriversDirective}
-Requisitos: Ativos de alto risco, listados na Binance ou KuCoin, e que não estejam na lista de exclusão: ${excludeAssets.join(', ')}.
-Sem NEUTRO. Preencha todos os campos obrigatórios do schema. Tickers únicos dentro do lote.
-Aplique todas as diretivas de qualidade (DCE, DAF, MPQ, IVL, etc) e os 3 pilares de análise (Fundamental, On-Chain, Automação). O campo 'isTopSignal' DEVE ser 'false' para todos.
-Os campos 'recommendedPositionSize' e 'riskPerTrade' devem ser calculados com base em um capital de $10.000 e risco de 1%.`;
+**PROCESSO FINAL:**
+Execute todos os passos para gerar a lista de ${count} sinais.
+
+**Formato:** Sua resposta DEVE ser um array JSON de objetos que obedecem estritamente ao schema 'presentDaySignalSchema'.
+`;
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",

@@ -197,46 +197,6 @@ const AutomationSetupCollapse: React.FC<{
     );
 };
 
-const TechnicalDriversDisplay: React.FC<{ drivers: { [key: string]: any } | undefined; t: any }> = ({ drivers, t }) => {
-    if (!drivers || Object.keys(drivers).length === 0) return null;
-
-    const formatKey = (key: string) => {
-        return key
-            .replace(/_/g, ' ')
-            .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
-    };
-
-    const formatValue = (value: any) => {
-        if (typeof value === 'boolean') {
-            return value ? '✅' : '❌';
-        }
-        if (typeof value === 'number') {
-            return value.toFixed(2);
-        }
-        return String(value);
-    };
-
-    return (
-        <details className="group bg-background/30 rounded-lg border border-border/30 transition-all duration-300 open:bg-background/50 open:border-primary/30">
-            <summary className="cursor-pointer list-none flex items-center justify-between text-text-secondary hover:text-white p-2 font-semibold transition-colors">
-                <span className="text-xs font-bold uppercase tracking-wider">{t.technicalDriversTitle}</span>
-                <ChevronDownIcon className="h-4 w-4 transition-transform duration-300 group-open:rotate-180" />
-            </summary>
-            <div className="border-t border-border/30 p-3 space-y-1.5 text-xs">
-                 {Object.entries(drivers).map(([key, value]) => (
-                    <div key={key} className="flex justify-between items-center gap-2">
-                        <span className="text-text-secondary truncate" title={formatKey(key)}>{formatKey(key)}:</span>
-                        <span className="font-semibold text-white text-right bg-background/50 px-2 py-0.5 rounded">
-                            {formatValue(value)}
-                        </span>
-                    </div>
-                ))}
-            </div>
-        </details>
-    );
-};
-
-
 export const SignalBlock: React.FC<{
     signal: PresentDayAssetSignal;
     type?: 'buy' | 'sell';
@@ -366,64 +326,66 @@ export const SignalBlock: React.FC<{
                     )}
                 </div>
 
-                <div className="space-y-2 text-xs mb-4">
-                    <TechnicalDriversDisplay drivers={signal.technicalDrivers} t={t} />
-                </div>
-                
                 {(signal.strongPoints?.length > 0 || signal.weakPoints?.length > 0 || signal.specialModes?.length > 0) && (
-                    <div className="space-y-2 text-xs mb-4 p-3 bg-background/50 rounded-md border border-border/30">
-                        {signal.strongPoints && signal.strongPoints.length > 0 && (
-                            <div>
-                                <h6 className="font-bold text-green-400">{t.strongPoints}</h6>
-                                <ul className="list-disc list-inside text-text-secondary pl-2">
-                                    {signal.strongPoints.map((point, i) => <li key={`strong-${i}`}>{point}</li>)}
-                                </ul>
-                            </div>
-                        )}
-                        {signal.weakPoints && signal.weakPoints.length > 0 && (
-                             <div className="mt-2">
-                                <h6 className="font-bold text-red-400">{t.weakPoints}</h6>
-                                <ul className="list-disc list-inside text-text-secondary pl-2">
-                                    {signal.weakPoints.map((point, i) => <li key={`weak-${i}`}>{point}</li>)}
-                                </ul>
-                            </div>
-                        )}
-                        {signal.specialModes && signal.specialModes.length > 0 && (
-                             <div className="mt-2">
-                                <h6 className="font-bold text-yellow-400">{t.specialModes}</h6>
-                                <ul className="list-disc list-inside text-text-secondary pl-2">
-                                    {signal.specialModes.map((mode, i) => <li key={`mode-${i}`}>{mode}</li>)}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
+                    <details className="group bg-background/30 rounded-lg border border-border/30 transition-all duration-300 open:bg-background/50 open:border-primary/30 text-xs mb-4">
+                        <summary className="cursor-pointer list-none flex items-center justify-between p-2 font-semibold transition-colors">
+                            <span className="font-bold text-text-secondary group-hover:text-white uppercase tracking-wider">{t.justifications}</span>
+                            <ChevronDownIcon className="h-4 w-4 text-text-secondary transition-transform duration-300 group-open:rotate-180" />
+                        </summary>
+                        <div className="border-t border-border/30 p-3 space-y-2">
+                            {signal.strongPoints && signal.strongPoints.length > 0 && (
+                                <div>
+                                    <h6 className="font-bold text-green-400">{t.strongPoints}</h6>
+                                    <ul className="list-disc list-inside text-text-secondary pl-2">
+                                        {signal.strongPoints.map((point, i) => <li key={`strong-${i}`}>{point}</li>)}
+                                    </ul>
+                                </div>
+                            )}
+                            {signal.weakPoints && signal.weakPoints.length > 0 && (
+                                    <div className="mt-2">
+                                    <h6 className="font-bold text-red-400">{t.weakPoints}</h6>
+                                    <ul className="list-disc list-inside text-text-secondary pl-2">
+                                        {signal.weakPoints.map((point, i) => <li key={`weak-${i}`}>{point}</li>)}
+                                    </ul>
+                                </div>
+                            )}
+                            {signal.specialModes && signal.specialModes.length > 0 && (
+                                    <div className="mt-2">
+                                    <h6 className="font-bold text-yellow-400">{t.specialModes}</h6>
+                                    <ul className="list-disc list-inside text-text-secondary pl-2">
+                                        {signal.specialModes.map((mode, i) => <li key={`mode-${i}`}>{mode}</li>)}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    </details>
                 )}
             </div>
 
             <div className="flex-shrink-0 mt-auto pt-4 border-t border-border/30 space-y-3">
                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                    <InfoTooltip text={t.tooltipEntryPrice}><div className="text-text-secondary">{t.entryPrice}:</div></InfoTooltip>
+                    <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipEntryPrice} /><span>{t.entryPrice}:</span></div>
                     <div className="text-white font-semibold text-right">{signal.entryRange}</div>
                     
-                    <InfoTooltip text={t.tooltipProbability}><div className="text-text-secondary">{t.probability}:</div></InfoTooltip>
+                    <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipProbability} /><span>{t.probability}:</span></div>
                     <VisualIndicator percentage={probabilityValue} />
                     
                     {signal.ivlPercentage !== undefined && (
                         <>
-                            <InfoTooltip text={t.tooltipIvl}><div className="text-text-secondary">{t.ivl}:</div></InfoTooltip>
+                            <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipIvl} /><span>{t.ivl}:</span></div>
                             <VisualIndicator percentage={signal.ivlPercentage} />
                         </>
                     )}
 
-                    <InfoTooltip text={t.tooltipTarget}><div className="text-text-secondary">{t.target}:</div></InfoTooltip>
+                    <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipTarget} /><span>{t.target}:</span></div>
                     <div className="text-green-400 font-semibold text-right">{signal.target}</div>
 
-                    <InfoTooltip text={t.tooltipStopLoss}><div className="text-text-secondary">{t.stopLoss}:</div></InfoTooltip>
+                    <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipStopLoss} /><span>{t.stopLoss}:</span></div>
                     <div className="text-red-400 font-semibold text-right">{signal.stopLoss}</div>
 
                     {riskRewardRatio && (
                         <>
-                            <InfoTooltip text={t.tooltipRiskReward}><div className="text-text-secondary">{t.riskReward}:</div></InfoTooltip>
+                            <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipRiskReward} /><span>{t.riskReward}:</span></div>
                             <div className="text-white font-semibold text-right">1 : {riskRewardRatio}</div>
                         </>
                     )}
@@ -432,13 +394,13 @@ export const SignalBlock: React.FC<{
 
                     {signal.riskPerTrade !== undefined && (
                         <>
-                            <InfoTooltip text={t.tooltipRiskValue}><div className="text-text-secondary">{t.riskValue}:</div></InfoTooltip>
+                            <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipRiskValue} /><span>{t.riskValue}:</span></div>
                             <div className="text-white font-semibold text-right">{formatCurrency(signal.riskPerTrade)}</div>
                         </>
                     )}
                     {signal.recommendedPositionSize !== undefined && (
                         <>
-                            <InfoTooltip text={t.tooltipPositionSize}><div className="text-text-secondary">{t.positionSize}:</div></InfoTooltip>
+                            <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipPositionSize} /><span>{t.positionSize}:</span></div>
                             <div className="text-white font-semibold text-right">{formatCurrency(signal.recommendedPositionSize)}</div>
                         </>
                     )}
@@ -453,7 +415,7 @@ export const SignalBlock: React.FC<{
                     <div className="text-white font-semibold text-right">{signal.exitDatetime}</div>
                 </div>
                  <div className="mt-3 pt-3 border-t border-border/30 text-center bg-background/30 rounded-md p-2">
-                    <InfoTooltip text={t.tooltipRoi}><div className="text-xs text-text-secondary mb-1">{profitLabel} ({t.baseInvestment})</div></InfoTooltip>
+                    <div className="flex items-center justify-center text-xs text-text-secondary mb-1"><InfoTooltip text={t.tooltipRoi} /><span>{profitLabel} ({t.baseInvestment})</span></div>
                     <div className={`${showProminentProfit ? 'text-4xl' : 'text-2xl'} font-bold ${profitColor}`}>{formatCurrency(signal.profitProjectionUsd)}</div>
                     <div className={`text-sm font-semibold ${profitColor}`}>({formatPercentage(signal.roiProjectionPercentage)})</div>
                 </div>
@@ -752,7 +714,7 @@ const PresentDaySignalCard: React.FC = () => {
                              </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                            {horizonsLoading[tabH] ? (
                                 [...Array(4)].map((_, i) => <SignalBlockSkeleton key={i} />)
                            ) : (
