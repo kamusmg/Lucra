@@ -1,5 +1,6 @@
 
 
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis, Narrative } from '../types.ts';
 import { LucraSignal } from '../types/lucra.ts';
@@ -262,11 +263,11 @@ const presentDayAnalysisSchema = {
 const narrativeSchema = {
     type: Type.OBJECT,
     properties: {
-        name: { type: Type.STRING, description: "O nome da narrativa (ex: 'DePIN')." },
-        impact: { type: Type.STRING, enum: ['positive', 'negative', 'neutral'], description: "O impacto classificado da narrativa." },
-        explanation: { type: Type.STRING, description: "Explicação concisa da narrativa e sua relevância." },
+        narrative: { type: Type.STRING, description: "O nome da narrativa (ex: 'ETFs Spot')." },
+        context: { type: Type.STRING, description: "Uma única frase explicando o que é essa narrativa e por que ela é relevante para o ativo agora." },
+        impact: { type: Type.STRING, enum: ['Alto', 'Médio', 'Baixo'], description: "O impacto potencial classificado da narrativa no preço do ativo." },
     },
-    required: ["name", "impact", "explanation"],
+    required: ["narrative", "context", "impact"],
 };
 
 const sentimentAnalysisSchema = {
@@ -624,18 +625,18 @@ export const fetchMemeCoinAnalysis = async (): Promise<MemeCoinSignal[]> => {
 
 export const fetchSentimentAnalysis = async (assets: string[], language: 'pt' | 'en'): Promise<SentimentAnalysis[]> => {
     const prompt = `
-        **DIRETIVA: BRIEFING DE INTELIGÊNCIA DE SENTIMENTO v2.0**
-        Sua tarefa é agir como um analista de inteligência de mercado. Para cada ativo, você deve fornecer uma análise de sentimento que explique o "porquê" e o "e daí?".
+        **DIRETIVA: BRIEFING DE INTELIGÊNCIA DE SENTIMENTO v3.0**
+        Sua tarefa é agir como um analista de inteligência de mercado. Para cada ativo, forneça um briefing que explique o "porquê" e o "e daí?".
 
         **ATIVOS PARA ANÁLISE:** ${assets.join(', ')}
 
         **REGRAS DE ANÁLISE:**
-        1.  **Pontuação e Rótulo (sentimentScore, sentimentLabel):** Forneça uma pontuação de 0 a 100 e o rótulo correspondente, como antes.
+        1.  **Pontuação e Rótulo (sentimentScore, sentimentLabel):** Forneça uma pontuação de 0 a 100 e o rótulo correspondente.
         2.  **Narrativas Dominantes (dominantNarratives):** Para cada uma das 2-3 narrativas mais importantes, você DEVE fornecer:
-            -   **name:** O nome da narrativa (ex: "DePIN", "Aprovação de ETF").
-            -   **impact:** Classifique o impacto da narrativa como 'positive', 'negative', ou 'neutral' para o ativo.
-            -   **explanation:** Uma frase concisa explicando o que é a narrativa e por que ela é relevante para este ativo específico agora.
-        3.  **Briefing de Inteligência (intelligenceBriefing):** Este é o campo mais crítico. Em vez de um simples resumo, escreva um parágrafo coeso (2-3 frases) que sintetize a análise. Ele DEVE explicar como o sentimento geral e as narrativas combinadas podem impactar a ação de preço do ativo no curto prazo. Conecte os pontos para o usuário.
+            -   **narrative:** O nome da narrativa (ex: "ETFs Spot").
+            -   **context:** Uma única frase explicando o que é essa narrativa e por que ela é relevante para o ativo agora (ex: "A expectativa de aprovação de ETFs de Ethereum está atraindo fluxo institucional, o que é historicamente altista.").
+            -   **impact:** Classifique o impacto potencial dessa narrativa no preço do ativo como 'Alto', 'Médio', ou 'Baixo'.
+        3.  **Briefing de Inteligência (intelligenceBriefing):** Escreva um parágrafo coeso (2-3 frases) que sintetize a análise. Ele DEVE explicar como o sentimento geral e as narrativas combinadas podem impactar a ação de preço do ativo no curto prazo. Conecte os pontos para o usuário.
         4.  **IDIOMA:** A resposta final (labels, narrativas, briefing) DEVE ser em ${language === 'pt' ? 'Português' : 'Inglês'}.
 
         **OUTPUT:** Sua resposta DEVE ser um array JSON, onde cada objeto corresponde a um ativo e obedece estritamente ao schema \`SentimentAnalysis\` atualizado.

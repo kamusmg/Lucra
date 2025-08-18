@@ -100,6 +100,9 @@ export const translations = {
         dominantNarratives: 'Narrativas Dominantes',
         intelligenceBriefing: 'Briefing de Inteligência',
         noSentimentData: 'Não foi possível carregar os dados de sentimento.',
+        context: 'Contexto',
+        impact: 'Impacto',
+
 
         // Notifications (Phase 4)
         notifications: 'Notificações',
@@ -387,6 +390,8 @@ export const translations = {
         dominantNarratives: 'Dominant Narratives',
         intelligenceBriefing: 'Intelligence Briefing',
         noSentimentData: 'Could not load sentiment data.',
+        context: 'Context',
+        impact: 'Impact',
         
         // Notifications (Phase 4)
         notifications: 'Notifications',

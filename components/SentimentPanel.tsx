@@ -1,13 +1,14 @@
 
 
+
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { translations } from '../utils/translations';
 import { SentimentAnalysis, Narrative } from '../types';
 import { ASSET_LOGOS as ALL_ASSET_LOGOS } from './MajorAssetSection.tsx';
-import TrendingUpIcon from './icons/TrendingUpIcon';
-import TrendingDownIcon from './icons/TrendingDownIcon';
+import InfoTooltip from './InfoTooltip.tsx';
+
 
 // Add missing logos for sentiment panel specifically
 const ASSET_LOGOS = {
@@ -71,13 +72,6 @@ const SentimentMeter: React.FC<{ score: number; t: any }> = ({ score, t }) => {
     );
 };
 
-const ImpactIcon: React.FC<{ impact: 'positive' | 'negative' | 'neutral' }> = ({ impact }) => {
-    if (impact === 'positive') return <TrendingUpIcon className="h-4 w-4 text-success flex-shrink-0" />;
-    if (impact === 'negative') return <TrendingDownIcon className="h-4 w-4 text-danger flex-shrink-0" />;
-    return <span className="h-4 w-4 text-text-secondary font-bold flex-shrink-0 text-center">-</span>;
-};
-
-
 const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) => {
     const { language } = useLanguage();
     const t = translations[language];
@@ -88,6 +82,12 @@ const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) 
         'Neutro': 'text-yellow-400', 'Neutral': 'text-yellow-400',
         'Altista': 'text-green-400', 'Bullish': 'text-green-400',
         'Muito Altista': 'text-emerald-400', 'Very Bullish': 'text-emerald-400',
+    };
+
+    const impactColorMap: { [key: string]: string } = {
+        'Alto': 'bg-red-500',
+        'Médio': 'bg-yellow-400',
+        'Baixo': 'bg-blue-400',
     };
     
     return (
@@ -106,15 +106,19 @@ const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) 
             
             <div className="space-y-3 my-3">
                  <h5 className="text-xs font-bold text-text-secondary uppercase tracking-wider">{t.dominantNarratives}</h5>
-                 {analysis.dominantNarratives.map(narrative => (
-                     <div key={narrative.name} className="bg-background/50 p-2 rounded-md border-l-2 border-primary/50">
-                        <div className="flex items-center gap-2">
-                            <ImpactIcon impact={narrative.impact} />
-                            <span className="font-semibold text-sm text-white">{narrative.name}</span>
-                        </div>
-                        <p className="text-xs text-text-secondary mt-1 pl-6">{narrative.explanation}</p>
-                    </div>
-                ))}
+                 <div className="flex flex-wrap gap-2">
+                    {analysis.dominantNarratives.map(narrativeObj => (
+                        <InfoTooltip
+                            key={narrativeObj.narrative}
+                            text={`${t.context}: ${narrativeObj.context} | ${t.impact}: ${narrativeObj.impact}`}
+                        >
+                            <span className="flex items-center gap-1.5 px-3 py-1 text-sm font-semibold rounded-full bg-background/50 border border-border/50 cursor-help hover:border-primary/50">
+                                <div className={`w-2 h-2 rounded-full ${impactColorMap[narrativeObj.impact] || 'bg-gray-500'}`}></div>
+                                {narrativeObj.narrative}
+                            </span>
+                        </InfoTooltip>
+                    ))}
+                 </div>
             </div>
 
             <div className="mt-auto pt-3 border-t border-border/50">

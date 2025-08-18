@@ -1,5 +1,6 @@
 
 
+
 export interface BacktestSignal {
   assetName: string;
   signalType: 'COMPRA' | 'VENDA';
@@ -375,9 +376,9 @@ export interface PerformanceMetrics {
 
 // --- New types for Sentiment Analysis (Phase 3) ---
 export interface Narrative {
-  name: string;
-  impact: 'positive' | 'negative' | 'neutral';
-  explanation: string;
+  narrative: string;
+  context: string;
+  impact: 'Alto' | 'Médio' | 'Baixo';
 }
 
 export interface SentimentAnalysis {
@@ -401,7 +402,7 @@ export interface Notification {
 // --- New types for Paper Trading (Phase 4.5) ---
 export type OrderStatus = 'Pending' | 'Filled' | 'Error';
 
-export interface ActiveTrade extends Omit<PresentDayAssetSignal, 'signalType' | 'technicalJustification'> {
+export interface ActiveTrade extends Omit<PresentDayAssetSignal, 'signalType'> {
   id: string;
   signalType: 'COMPRA' | 'VENDA';
   status: 'active' | 'closing';
