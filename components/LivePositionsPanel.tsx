@@ -35,12 +35,22 @@ const StatusIndicator: React.FC<{ status: OrderStatus; details: string; t: any }
     
     const currentConfig = config[status];
 
+    const content = (
+        <div className={`flex items-center gap-1.5 ${currentConfig.color}`}>
+            {currentConfig.icon}
+            <span className="font-semibold">{currentConfig.label}</span>
+        </div>
+    );
+
+    // Remove the annoying tooltip specifically for the 'Filled' status.
+    if (status === 'Filled') {
+        return content;
+    }
+
+    // Keep tooltips for other statuses as they provide useful context.
     return (
         <InfoTooltip text={details || currentConfig.tooltip}>
-             <div className={`flex items-center gap-1.5 ${currentConfig.color}`}>
-                {currentConfig.icon}
-                <span className="font-semibold">{currentConfig.label}</span>
-            </div>
+            {content}
         </InfoTooltip>
     );
 };
