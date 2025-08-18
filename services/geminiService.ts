@@ -1,8 +1,4 @@
 
-
-
-
-
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis, Narrative } from '../types.ts';
 import { LucraSignal } from '../types/lucra.ts';
@@ -282,6 +278,38 @@ const sentimentAnalysisSchema = {
         intelligenceBriefing: { type: Type.STRING, description: "Um parágrafo coeso que sintetiza a análise e seu impacto potencial no preço." },
     },
     required: ["assetTicker", "sentimentScore", "sentimentLabel", "dominantNarratives", "intelligenceBriefing"],
+};
+
+const chartAnalysisRecommendationSchema = {
+    type: Type.OBJECT,
+    properties: {
+        tipo: { type: Type.STRING, enum: ['COMPRA', 'VENDA', 'LONG', 'SHORT', 'NEUTRO'] },
+        precoEntrada: { type: Type.NUMBER },
+        stopLoss: { type: Type.NUMBER },
+        takeProfit: { type: Type.NUMBER },
+        confiancaPercentual: { type: Type.NUMBER },
+        entryDatetime: { type: Type.STRING },
+        exitDatetime: { type: Type.STRING },
+    },
+    required: ["tipo", "precoEntrada", "stopLoss", "takeProfit", "confiancaPercentual"]
+};
+
+const chartAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        assetIdentification: { type: Type.STRING },
+        timeframe: { type: Type.STRING },
+        globalSignal: { type: Type.STRING, enum: ['bullish', 'bearish', 'neutral'] },
+        technicalDrivers: {
+            type: Type.OBJECT,
+            additionalProperties: { oneOf: [{ type: Type.STRING }, { type: Type.BOOLEAN }, { type: Type.NUMBER }] }
+        },
+        recomendacao: chartAnalysisRecommendationSchema,
+        strongPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+        weakPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+        specialModes: { type: Type.ARRAY, items: { type: Type.STRING } },
+    },
+    required: ["assetIdentification", "timeframe", "globalSignal", "technicalDrivers", "recomendacao"]
 };
 
 /**
@@ -610,6 +638,49 @@ export const fetchTacticalAnalysis = async (assetTicker: string, livePrice: stri
     }
 };
 
+export const analyzeChartImage = async (base64Image: string, mimeType: string, language: 'pt' | 'en'): Promise<ChartAnalysisResult> => {
+    const imagePart = {
+        inlineData: {
+            mimeType: mimeType,
+            data: base64Image,
+        },
+    };
+
+    const textPart = {
+        text: `
+            **DIRETIVA DE ANÁLISE DE GRÁFICO TÉCNICO v2.0**
+            Você é a IA 'Alpha'. Sua missão é analisar a imagem de um gráfico de trading fornecida e extrair informações operacionais precisas.
+
+            **TAREFA:**
+            1.  **Identificação:** Identifique o ativo (ticker) e o timeframe do gráfico.
+            2.  **Sinal Global:** Determine a tendência geral (bullish, bearish, neutral).
+            3.  **Drivers Técnicos:** Liste os indicadores chave que justificam sua análise no objeto 'technicalDrivers'.
+            4.  **Recomendação:** Forneça uma recomendação operacional CLARA e COMPLETA (COMPRA, VENDA, NEUTRO) com preço de entrada, alvo (takeProfit), stop-loss e uma porcentagem de confiança.
+            5.  **Justificativa:** Forneça os pontos fortes e fracos que sustentam a recomendação.
+            6.  **IDIOMA:** A resposta DEVE ser em ${language === 'pt' ? 'Português' : 'Inglês'}.
+
+            **Formato:** Sua resposta DEVE ser um único objeto JSON que obedece estritamente ao schema fornecido.
+        `
+    };
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: { parts: [imagePart, textPart] },
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: chartAnalysisSchema,
+            },
+        });
+
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as ChartAnalysisResult;
+    } catch (error) {
+        console.error("Error analyzing chart image with Gemini API:", error);
+        throw new Error(`Falha na análise de imagem da IA: ${error instanceof Error ? error.message : String(error)}`);
+    }
+};
+
 export const fetchMemeCoinAnalysis = async (): Promise<MemeCoinSignal[]> => {
     const prompt = `
         **DIRETIVA: DEGEN ALPHA**
@@ -700,10 +771,6 @@ export const fetchSentimentAnalysis = async (assets: string[], language: 'pt' | 
 export const fetchBacktestAnalysis = async (): Promise<BacktestAnalysisResult> => {
     // This is a simplified mock. A real implementation would involve complex historical data fetching and simulation.
     throw new Error("fetchBacktestAnalysis is not implemented yet.");
-};
-export const analyzeChartImage = async (base64Image: string, mimeType: string, language: 'pt' | 'en'): Promise<ChartAnalysisResult> => {
-    // This is a simplified mock.
-    throw new Error("analyzeChartImage is not implemented yet.");
 };
 export const createChatSession = async (
     presentDayData: PresentDayAnalysisResult,

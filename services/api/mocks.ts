@@ -1,3 +1,4 @@
+
 // This file acts as a "mock" or "simulated" backend.
 // Instead of making network requests, it calls the local AI service functions directly.
 // This allows the app to run fully self-contained in environments like AI Studio.
@@ -84,7 +85,8 @@ export const MockTransport = {
             return data as T;
         }
         if (path === '/api/analysis/chart') {
-            const data = await geminiService.analyzeChartImage(body.base64Image, body.mimeType, body.language);
+            const { base64Image, mimeType, language } = body;
+            const data = await geminiService.analyzeChartImage(base64Image, mimeType, language);
             return data as T;
         }
         if (path === '/api/chat') {

@@ -1,5 +1,5 @@
+
 // backend/src/api/analysisController.ts
-import type { Request, Response, NextFunction } from 'express';
 import * as geminiService from '../services/geminiService';
 import * as marketService from '../services/marketService';
 import { HorizonKey, HORIZON_LABELS } from '../services/horizonPolicy';
@@ -30,7 +30,7 @@ const ensureBacktestAnalysis = async () => {
     return analysisCache.backtest;
 };
 
-export const getPresentDayAnalysis = async (req: Request, res: Response, next: NextFunction) => {
+export const getPresentDayAnalysis = async (req, res, next) => {
     try {
         const data = await ensurePresentDayAnalysis();
         res.json(data);
@@ -40,7 +40,7 @@ export const getPresentDayAnalysis = async (req: Request, res: Response, next: N
     }
 };
 
-export const getBacktestAnalysis = async (req: Request, res: Response, next: NextFunction) => {
+export const getBacktestAnalysis = async (req, res, next) => {
     try {
         const data = await ensureBacktestAnalysis();
         res.json(data);
@@ -50,7 +50,7 @@ export const getBacktestAnalysis = async (req: Request, res: Response, next: Nex
     }
 };
 
-export const runFullAnalysis = async (req: Request, res: Response, next: NextFunction) => {
+export const runFullAnalysis = async (req, res, next) => {
     try {
         const { totalCapital = 10000, riskPercentage = 1 } = req.body;
         
@@ -67,7 +67,7 @@ export const runFullAnalysis = async (req: Request, res: Response, next: NextFun
     }
 };
 
-export const rerollSignal = async (req: Request, res: Response, next: NextFunction) => {
+export const rerollSignal = async (req, res, next) => {
     try {
         const { signalType, horizon, excludeAssets } = req.body;
         const pricesWithSource = await marketService.fetchPrices(['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'LTC', 'MATIC', 'DOT']);
@@ -83,7 +83,7 @@ export const rerollSignal = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-export const refreshHorizon = async (req: Request, res: Response, next: NextFunction) => {
+export const refreshHorizon = async (req, res, next) => {
     try {
         const { horizon, side, count, excludeAssets } = req.body;
         const horizonLabel = HORIZON_LABELS[horizon as HorizonKey];
@@ -97,7 +97,7 @@ export const refreshHorizon = async (req: Request, res: Response, next: NextFunc
     }
 };
 
-export const getTacticalAnalysis = async (req: Request, res: Response, next: NextFunction) => {
+export const getTacticalAnalysis = async (req, res, next) => {
     try {
         const { assetTicker, language, horizon } = req.body;
         const priceInfo = await marketService.fetchPriceForTicker(assetTicker);
@@ -112,18 +112,21 @@ export const getTacticalAnalysis = async (req: Request, res: Response, next: Nex
     }
 };
 
-export const analyzeChart = async (req: Request, res: Response, next: NextFunction) => {
+export const analyzeChart = async (req, res, next) => {
     try {
         const { base64Image, mimeType, language } = req.body;
-        const result = await geminiService.analyzeChartImage(base64Image, mimeType, language);
-        res.json(result);
+        if (!base64Image || !mimeType || !language) {
+            return res.status(400).json({ message: 'Missing required fields: base64Image, mimeType, language' });
+        }
+        const analysis = await geminiService.analyzeChartImage(base64Image, mimeType, language);
+        res.json(analysis);
     } catch (error: any) {
-        error.message = `Error analyzing chart: ${error.message}`;
+        error.message = `Error analyzing chart image: ${error.message}`;
         next(error);
     }
 };
 
-export const postChatMessage = async (req: Request, res: Response, next: NextFunction) => {
+export const postChatMessage = async (req, res, next) => {
     try {
         const { message, presentDayData, backtestData } = req.body;
         const chat = await geminiService.createChatSession(presentDayData, backtestData);
@@ -135,7 +138,7 @@ export const postChatMessage = async (req: Request, res: Response, next: NextFun
     }
 };
 
-export const getSupervisorDirective = async (req: Request, res: Response, next: NextFunction) => {
+export const getSupervisorDirective = async (req, res, next) => {
     try {
         const { analysis, evolutionPrompt } = req.body;
         const directive = await geminiService.fetchSupervisorDirective(analysis, evolutionPrompt);
@@ -146,7 +149,7 @@ export const getSupervisorDirective = async (req: Request, res: Response, next: 
     }
 };
 
-export const getRobustnessAudit = async (req: Request, res: Response, next: NextFunction) => {
+export const getRobustnessAudit = async (req, res, next) => {
     try {
         const report = await geminiService.fetchRobustnessAudit();
         res.json(report);
@@ -156,7 +159,7 @@ export const getRobustnessAudit = async (req: Request, res: Response, next: Next
     }
 };
 
-export const getMarketPrices = async (req: Request, res: Response, next: NextFunction) => {
+export const getMarketPrices = async (req, res, next) => {
     try {
         const { tickers } = req.body;
         if (!Array.isArray(tickers)) {
@@ -170,7 +173,7 @@ export const getMarketPrices = async (req: Request, res: Response, next: NextFun
     }
 };
 
-export const getVereditoExport = async (req: Request, res: Response, next: NextFunction) => {
+export const getVereditoExport = async (req, res, next) => {
     try {
         const { horizon } = req.params;
         const data = await exportVereditoJSONByHorizon(horizon as HorizonKey);
@@ -181,7 +184,7 @@ export const getVereditoExport = async (req: Request, res: Response, next: NextF
     }
 };
 
-export const getMemeCoinAnalysis = async (req: Request, res: Response, next: NextFunction) => {
+export const getMemeCoinAnalysis = async (req, res, next) => {
     try {
         const data = await geminiService.fetchMemeCoinAnalysis();
         res.json(data);
@@ -191,7 +194,7 @@ export const getMemeCoinAnalysis = async (req: Request, res: Response, next: Nex
     }
 };
 
-export const getSentimentAnalysis = async (req: Request, res: Response, next: NextFunction) => {
+export const getSentimentAnalysis = async (req, res, next) => {
     try {
         const { assets, language } = req.body;
         const data = await geminiService.fetchSentimentAnalysis(assets, language);

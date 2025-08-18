@@ -1,6 +1,4 @@
 
-
-
 import React, { Suspense } from 'react';
 import { useData } from './contexts/DataContext.tsx';
 import { useLanguage } from './contexts/LanguageContext.tsx';
@@ -8,7 +6,6 @@ import { translations } from './utils/translations.ts';
 
 import Clock from './components/Clock.tsx';
 import MacroDashboard from './components/MacroDashboard.tsx';
-import ChartAnalysis from './components/ChartAnalysis.tsx';
 import QuickAnalysis from './components/QuickAnalysis.tsx';
 import CommandBridge from './components/CommandBridge.tsx';
 import RealTradingGuide from './components/RealTradingGuide.tsx';
@@ -22,6 +19,7 @@ import NotificationCenter from './components/NotificationCenter.tsx';
 import NotificationToasts from './components/NotificationToast.tsx';
 import LivePositionsPanel from './components/LivePositionsPanel.tsx';
 import ApiKeyManager from './components/ApiKeyManager.tsx';
+import Glossary from './components/Glossary.tsx';
 
 
 import CollapsibleSection from './components/CollapsibleSection.tsx';
@@ -123,8 +121,6 @@ const AppContent: React.FC = () => {
             <Watchlist />
           </CollapsibleSection>
           
-          <ChartAnalysis />
-          
           {/* New DegenAlpha Watchlist */}
           <CollapsibleSection
             title={t.memeCoinWatchlistTitle}
@@ -155,48 +151,14 @@ const AppContent: React.FC = () => {
             </div>
           )}
 
-          {/* User requested to hide these sections to simplify the UI */}
-          {/*
-          <CollapsibleSection 
-            title={t.commandBridgeTitle}
-            icon={<NetworkIcon className="h-8 w-8 text-primary" />}
-          >
-             <CommandBridge />
-          </CollapsibleSection>
-
-           <CollapsibleSection 
-            title={t.advancedMonitoringTitle}
-            icon={<MonitorIcon className="h-8 w-8 text-primary" />}
-          >
-            <Suspense fallback={<AICoreMonitorSkeleton />}>
-                <AdvancedMonitoringLoader />
-            </Suspense>
-          </CollapsibleSection>
-
-          <CollapsibleSection 
-            title={t.backtestEvolutionTitle}
-            icon={<CandleChartIcon className="h-8 w-8 text-primary" />}
-          >
-             <Suspense fallback={<BacktestHorizonSectionSkeleton title="Loading..." />}>
-                <BacktestAnalysisLoader />
-            </Suspense>
-          </CollapsibleSection>
-
-           <CollapsibleSection 
-            title={t.realTradingGuideTitle}
-            icon={<BookOpenIcon className="h-8 w-8 text-primary" />}
-          >
-            <RealTradingGuide />
-          </CollapsibleSection>
-          */}
-
+          <Glossary />
 
           <footer className="text-center mt-12 pt-8 border-t border-border">
             <p className="text-sm text-text-secondary">
               {t.footerDisclaimer}
             </p>
              <p className="text-xs text-text-secondary mt-1">
-              {t.footerVersion} {backtestData ? backtestData.versionId : '...'}
+              {t.footerVersion} v9.0 "Adaptive Core"
             </p>
           </footer>
         </main>

@@ -23,7 +23,7 @@ const StatusIndicator: React.FC<{ status: OrderStatus; details: string; t: any }
             icon: <CheckCircleIcon className="h-4 w-4" />,
             color: 'text-success',
             label: t.statusFilled,
-            tooltip: t.tooltipFilled,
+            tooltip: '', // Tooltip removido para o status 'Preenchida'
         },
         Error: {
             icon: <CautionIcon className="h-4 w-4" />,
@@ -42,16 +42,16 @@ const StatusIndicator: React.FC<{ status: OrderStatus; details: string; t: any }
         </div>
     );
 
-    // Remove the annoying tooltip specifically for the 'Filled' status.
-    if (status === 'Filled') {
+    // Não renderiza tooltip para 'Filled'
+    if (status === 'Filled' || !currentConfig.tooltip) {
         return content;
     }
 
-    // Keep tooltips for other statuses as they provide useful context.
     return (
-        <InfoTooltip text={details || currentConfig.tooltip}>
+        <div className="flex items-center gap-1">
             {content}
-        </InfoTooltip>
+            <InfoTooltip text={details || currentConfig.tooltip} />
+        </div>
     );
 };
 
@@ -62,10 +62,8 @@ const LivePositionsPanel: React.FC = () => {
     const t = translations[language];
 
     const sortedTrades = [...activeTrades].sort((a, b) => {
-        // Luxon is more reliable for specific formats than the native Date constructor
         const dateA = DateTime.fromFormat(a.entryDatetime, 'dd/MM/yyyy HH:mm:ss');
         const dateB = DateTime.fromFormat(b.entryDatetime, 'dd/MM/yyyy HH:mm:ss');
-        // Handle invalid dates just in case
         if (!dateA.isValid || !dateB.isValid) return 0;
         return dateB.toMillis() - dateA.toMillis();
     });
@@ -107,14 +105,16 @@ const LivePositionsPanel: React.FC = () => {
                                 <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">{t.target}</th>
                                 <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">{t.stopLoss}</th>
                                 <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">
-                                    <InfoTooltip text={t.tooltipPnlNet}>
+                                    <div className="flex items-center justify-end">
                                         <span>{t.pnlNet} (USD)</span>
-                                    </InfoTooltip>
+                                        <InfoTooltip text={t.tooltipPnlNet} />
+                                    </div>
                                 </th>
                                 <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">
-                                     <InfoTooltip text={t.tooltipPnlNet}>
+                                    <div className="flex items-center justify-end">
                                         <span>{t.pnlNet} (%)</span>
-                                    </InfoTooltip>
+                                        <InfoTooltip text={t.tooltipPnlNet} />
+                                    </div>
                                 </th>
                             </tr>
                         </thead>

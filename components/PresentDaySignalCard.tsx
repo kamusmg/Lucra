@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { PresentDayAssetSignal, ChecklistResult } from '../types.ts';
 import { formatCurrency, formatPercentage } from '../utils/formatters.ts';
@@ -215,25 +214,6 @@ export const SignalBlock: React.FC<{
     const profitColor = isProjectedProfit ? 'text-success' : 'text-danger';
     const profitLabel = t[signal.signalType === 'VENDA' ? 'profitOnFall' : 'estimatedProfit'];
 
-    const riskRewardRatio = useMemo(() => {
-        try {
-            const entryValue = parseFloat(signal.entryRange.split('-')[0].trim());
-            const targetValue = parseFloat(signal.target);
-            const stopLossValue = parseFloat(signal.stopLoss);
-
-            if (isNaN(entryValue) || isNaN(targetValue) || isNaN(stopLossValue)) return null;
-            
-            const potentialLoss = Math.abs(entryValue - stopLossValue);
-            if (potentialLoss === 0) return null;
-
-            const potentialProfit = Math.abs(targetValue - entryValue);
-            const ratio = potentialProfit / potentialLoss;
-            return ratio.toFixed(2);
-        } catch {
-            return null;
-        }
-    }, [signal.entryRange, signal.target, signal.stopLoss]);
-
     if (rerollError) {
         return (
              <div className="bg-danger/20 rounded-lg p-4 flex flex-col h-full border border-danger/50 backdrop-blur-sm items-center justify-center text-center">
@@ -364,58 +344,62 @@ export const SignalBlock: React.FC<{
 
             <div className="flex-shrink-0 mt-auto pt-4 border-t border-border/30 space-y-3">
                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                    <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipEntryPrice} /><span>{t.entryPrice}:</span></div>
+                    <div className="flex items-center text-text-secondary">
+                      <span>{t.entryPrice}</span>
+                      
+                    </div>
                     <div className="text-white font-semibold text-right">{signal.entryRange}</div>
                     
-                    <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipProbability} /><span>{t.probability}:</span></div>
+                    <div className="flex items-center text-text-secondary">
+                        <span>{t.probability}</span>
+                        
+                    </div>
                     <VisualIndicator percentage={probabilityValue} />
                     
                     {signal.ivlPercentage !== undefined && (
                         <>
-                            <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipIvl} /><span>{t.ivl}:</span></div>
+                            <div className="flex items-center text-text-secondary">
+                                <span>{t.ivl}</span>
+                                
+                            </div>
                             <VisualIndicator percentage={signal.ivlPercentage} />
                         </>
                     )}
 
-                    <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipTarget} /><span>{t.target}:</span></div>
+                    <div className="flex items-center text-text-secondary">
+                        <span>{t.target}</span>
+                        
+                    </div>
                     <div className="text-green-400 font-semibold text-right">{signal.target}</div>
 
-                    <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipStopLoss} /><span>{t.stopLoss}:</span></div>
+                    <div className="flex items-center text-text-secondary">
+                        <span>{t.stopLoss}</span>
+                        
+                    </div>
                     <div className="text-red-400 font-semibold text-right">{signal.stopLoss}</div>
-
-                    {riskRewardRatio && (
-                        <>
-                            <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipRiskReward} /><span>{t.riskReward}:</span></div>
-                            <div className="text-white font-semibold text-right">1 : {riskRewardRatio}</div>
-                        </>
-                    )}
                     
                     <div className="text-text-secondary col-span-2 my-1 border-t border-border/30"></div>
 
-                    {signal.riskPerTrade !== undefined && (
-                        <>
-                            <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipRiskValue} /><span>{t.riskValue}:</span></div>
-                            <div className="text-white font-semibold text-right">{formatCurrency(signal.riskPerTrade)}</div>
-                        </>
-                    )}
-                    {signal.recommendedPositionSize !== undefined && (
-                        <>
-                            <div className="flex items-center text-text-secondary"><InfoTooltip text={t.tooltipPositionSize} /><span>{t.positionSize}:</span></div>
-                            <div className="text-white font-semibold text-right">{formatCurrency(signal.recommendedPositionSize)}</div>
-                        </>
-                    )}
-
-                    <div className="text-text-secondary">{t.strategy}:</div>
+                    <div className="flex items-center text-text-secondary">
+                        <span>{t.strategy}</span>
+                    </div>
                     <div className="text-white font-semibold text-right">{signal.strategy}</div>
 
-                    <div className="text-text-secondary">{t.entryDate}:</div>
+                    <div className="flex items-center text-text-secondary">
+                        <span>{t.entryDate}</span>
+                    </div>
                     <div className="text-white font-semibold text-right">{signal.entryDatetime}</div>
 
-                    <div className="text-text-secondary">{t.exitDate}:</div>
+                    <div className="flex items-center text-text-secondary">
+                        <span>{t.exitDate}</span>
+                    </div>
                     <div className="text-white font-semibold text-right">{signal.exitDatetime}</div>
                 </div>
                  <div className="mt-3 pt-3 border-t border-border/30 text-center bg-background/30 rounded-md p-2">
-                    <div className="flex items-center justify-center text-xs text-text-secondary mb-1"><InfoTooltip text={t.tooltipRoi} /><span>{profitLabel} ({t.baseInvestment})</span></div>
+                    <div className="text-xs text-text-secondary mb-1 flex items-center justify-center">
+                        {profitLabel} ({t.baseInvestment})
+                        
+                    </div>
                     <div className={`${showProminentProfit ? 'text-4xl' : 'text-2xl'} font-bold ${profitColor}`}>{formatCurrency(signal.profitProjectionUsd)}</div>
                     <div className={`text-sm font-semibold ${profitColor}`}>({formatPercentage(signal.roiProjectionPercentage)})</div>
                 </div>
@@ -569,24 +553,6 @@ const PresentDaySignalCard: React.FC = () => {
         }
     }, [presentDayData, isAddingSignal, tabH, addPresentDaySignal, t.rerollError]);
     
-    const handleExport = useCallback(async () => {
-        try {
-            const { filename, payload } = await apiClient.exportVereditoJSONByHorizon(tabH);
-            console.log("Export Veredito:", filename, payload);
-        
-            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = filename;
-            a.click();
-            URL.revokeObjectURL(url);
-        
-        } catch (e) {
-            console.error("Falha ao exportar:", e);
-        }
-    }, [tabH]);
-    
     const { presentDayBuySignals, presentDaySellSignals, presentDayStrengths, presentDayWeaknesses } = presentDayData || {};
     
     const matchesHorizonLabel = useCallback((signal: PresentDayAssetSignal, horizonKey: HorizonKey) => {
@@ -706,15 +672,9 @@ const PresentDaySignalCard: React.FC = () => {
                                 {HORIZON_LABELS[h]}
                               </button>
                             ))}
-                             <button
-                                  onClick={handleExport}
-                                  className="ml-auto px-4 py-2 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-700 transition-colors"
-                                >
-                                  Exportar JSON ({HORIZON_LABELS[tabH]})
-                             </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                            {horizonsLoading[tabH] ? (
                                 [...Array(4)].map((_, i) => <SignalBlockSkeleton key={i} />)
                            ) : (

@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React from 'react';
 import { BacktestSignal } from '../types.ts';
 import { formatCurrency, formatPercentage } from '../utils/formatters.ts';
@@ -109,12 +103,13 @@ const SignalCard: React.FC<SignalCardProps> = ({ signal }) => {
         <div className="mt-auto bg-background/50 rounded-lg p-4 border border-border/50">
              <h4 className="text-sm font-bold text-primary uppercase tracking-wider mb-3 text-center">Resultado da Operação</h4>
              <div className="space-y-2 text-sm">
-                <InfoTooltip text={t.tooltipInvestment}>
-                    <div className="flex justify-between items-center">
-                        <span className="text-text-secondary">Investimento:</span>
-                        <span className="font-semibold text-text">{formatCurrency(signal.investment)}</span>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center text-text-secondary">
+                        <span>Investimento:</span>
+                        <InfoTooltip text={t.tooltipInvestment} />
                     </div>
-                </InfoTooltip>
+                    <span className="font-semibold text-text">{formatCurrency(signal.investment)}</span>
+                </div>
                 <div className="flex justify-between items-center">
                     <span className="text-text-secondary">Valor Final:</span>
                     <span className={`font-semibold text-base ${isProfit ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(signal.finalValue)}</span>

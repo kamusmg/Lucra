@@ -1,3 +1,4 @@
+
 import { PresentDayAssetSignal, Horizon, PresentDayAnalysisResult, BacktestAnalysisResult, ChartAnalysisResult, SelfAnalysis, AuditReport, MemeCoinSignal, SentimentAnalysis } from '../../types.ts';
 import { LivePricesWithSource } from '../marketService.ts';
 import { HorizonKey } from '../horizonPolicy.ts';
@@ -46,10 +47,6 @@ export class ApiClient {
     return this.transport.post<PresentDayAssetSignal>('/api/analysis/tactical', { assetTicker, language, horizon });
   };
 
-  analyzeChartImage = (base64Image: string, mimeType: string, language: 'pt' | 'en'): Promise<ChartAnalysisResult> => {
-    return this.transport.post<ChartAnalysisResult>('/api/analysis/chart', { base64Image, mimeType, language });
-  };
-  
   sendMessage = (payload: {
     message: string;
     presentDayData: PresentDayAnalysisResult;
@@ -80,6 +77,10 @@ export class ApiClient {
 
   fetchHistoricalPrice = (assetName: string, timestamp: number): Promise<{ price: string | null }> => {
     return this.transport.post<{ price: string | null }>('/api/market/historical-price', { assetName, timestamp });
+  };
+
+  analyzeChartImage = (base64Image: string, mimeType: string, language: 'pt' | 'en'): Promise<ChartAnalysisResult> => {
+    return this.transport.post<ChartAnalysisResult>('/api/analysis/chart', { base64Image, mimeType, language });
   };
 
   fetchSentimentAnalysis = (assets: string[], language: 'pt' | 'en'): Promise<SentimentAnalysis[]> => {
