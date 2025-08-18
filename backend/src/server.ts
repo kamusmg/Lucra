@@ -1,4 +1,5 @@
 
+
 import express, { ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -16,19 +17,19 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Increase limit for chart images
 
 // --- Analysis Routes ---
-app.get('/api/analysis/present-day', analysisController.getPresentDayAnalysis);
-app.get('/api/analysis/backtest', analysisController.getBacktestAnalysis);
-app.post('/api/analysis/reroll-signal', analysisController.rerollSignal);
-app.post('/api/analysis/refresh-horizon', analysisController.refreshHorizon);
-app.post('/api/analysis/tactical', analysisController.getTacticalAnalysis);
-app.post('/api/analysis/chart', analysisController.postChartAnalysis);
-app.post('/api/chat', analysisController.postChatMessage);
-app.post('/api/analysis/supervisor-directive', analysisController.getSupervisorDirective);
-app.get('/api/analysis/robustness-audit', analysisController.getRobustnessAudit);
-app.post('/api/market/prices', analysisController.getMarketPrices);
-app.post('/api/analysis/run', analysisController.runFullAnalysis);
-app.get('/api/analysis/meme-coins', analysisController.getMemeCoinAnalysis);
-app.post('/api/analysis/sentiment', analysisController.getSentimentAnalysis);
+app.get('/api/analysis/present-day', (req, res, next) => analysisController.getPresentDayAnalysis(req, res, next));
+app.get('/api/analysis/backtest', (req, res, next) => analysisController.getBacktestAnalysis(req, res, next));
+app.post('/api/analysis/reroll-signal', (req, res, next) => analysisController.rerollSignal(req, res, next));
+app.post('/api/analysis/refresh-horizon', (req, res, next) => analysisController.refreshHorizon(req, res, next));
+app.post('/api/analysis/tactical', (req, res, next) => analysisController.getTacticalAnalysis(req, res, next));
+app.post('/api/analysis/chart', (req, res, next) => analysisController.postChartAnalysis(req, res, next));
+app.post('/api/chat', (req, res, next) => analysisController.postChatMessage(req, res, next));
+app.post('/api/analysis/supervisor-directive', (req, res, next) => analysisController.getSupervisorDirective(req, res, next));
+app.get('/api/analysis/robustness-audit', (req, res, next) => analysisController.getRobustnessAudit(req, res, next));
+app.post('/api/market/prices', (req, res, next) => analysisController.getMarketPrices(req, res, next));
+app.post('/api/analysis/run', (req, res, next) => analysisController.runFullAnalysis(req, res, next));
+app.get('/api/analysis/meme-coins', (req, res, next) => analysisController.getMemeCoinAnalysis(req, res, next));
+app.post('/api/analysis/sentiment', (req, res, next) => analysisController.getSentimentAnalysis(req, res, next));
 
 
 // Basic Error Handling Middleware
@@ -37,7 +38,7 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
   res.status(500).json({ message: 'An internal server error occurred', error: errorMessage });
 };
-app.use(errorHandler);
+app.use((err, req, res, next) => errorHandler(err, req, res, next));
 
 
 app.listen(PORT, () => {
