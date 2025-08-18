@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { PresentDayAssetSignal, ChecklistResult } from '../types.ts';
 import { formatCurrency, formatPercentage } from '../utils/formatters.ts';
@@ -526,7 +521,8 @@ const SignalGrid: React.FC<{
 const PresentDaySignalCard: React.FC = () => {
     const { 
         presentDayData, 
-        isInitialLoading, 
+        isInitialLoading,
+        isRecalculating,
         updatePresentDaySignal,
         addPresentDaySignal,
         loadedHorizons,
@@ -669,102 +665,109 @@ const PresentDaySignalCard: React.FC = () => {
     const averageConfidence = allSignals.length > 0 ? totalConfidence / allSignals.length : 0;
 
   return (
-    <div className="space-y-10">
-        <div className="bg-surface/50 border border-border/50 rounded-lg p-6 shadow-lg">
-            <h3 className="text-2xl font-bold text-primary mb-4">{t.riskAnalysisTitle}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-green-600/10 border border-green-500/30 rounded-lg p-4 flex items-start gap-3">
-                    <div className="flex-shrink-0 text-green-400 mt-1"><GoIcon className="h-6 w-6" /></div>
-                    <div>
-                        <h6 className="font-bold text-green-300">{t.strongPoints}</h6>
-                        <p className="text-sm text-text-secondary mt-1">{presentDayStrengths}</p>
+    <div className="relative">
+        {isRecalculating && (
+            <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center rounded-lg z-20">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        )}
+        <div className="space-y-10">
+            <div className="bg-surface/50 border border-border/50 rounded-lg p-6 shadow-lg">
+                <h3 className="text-2xl font-bold text-primary mb-4">{t.riskAnalysisTitle}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-green-600/10 border border-green-500/30 rounded-lg p-4 flex items-start gap-3">
+                        <div className="flex-shrink-0 text-green-400 mt-1"><GoIcon className="h-6 w-6" /></div>
+                        <div>
+                            <h6 className="font-bold text-green-300">{t.strongPoints}</h6>
+                            <p className="text-sm text-text-secondary mt-1">{presentDayStrengths}</p>
+                        </div>
                     </div>
-                </div>
-                <div className="bg-red-600/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
-                    <div className="flex-shrink-0 text-red-400 mt-1"><CautionIcon className="h-6 w-6" /></div>
-                    <div>
-                        <h6 className="font-bold text-red-300">{t.weakPointsAndRisks}</h6>
-                        <p className="text-sm text-text-secondary mt-1">{presentDayWeaknesses}</p>
+                    <div className="bg-red-600/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
+                        <div className="flex-shrink-0 text-red-400 mt-1"><CautionIcon className="h-6 w-6" /></div>
+                        <div>
+                            <h6 className="font-bold text-red-300">{t.weakPointsAndRisks}</h6>
+                            <p className="text-sm text-text-secondary mt-1">{presentDayWeaknesses}</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div>
-            <div className="bg-surface/50 border border-border/50 rounded-lg p-6 shadow-lg mb-6">
-              <h4 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-                <span>📊</span>
-                <span>{t.daySummary}</span>
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-sm text-text-secondary font-bold uppercase tracking-wider">{t.top3Assets}</p>
-                  <p className="text-lg font-semibold text-white mt-1" title={topAssets.length > 0 ? topAssets.join(', ') : t.noAssets}>
-                    {topAssets.length > 0 ? topAssets.join(', ') : 'N/A'}
-                  </p>
+            
+            <div>
+                <div className="bg-surface/50 border border-border/50 rounded-lg p-6 shadow-lg mb-6">
+                  <h4 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                    <span>📊</span>
+                    <span>{t.daySummary}</span>
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-sm text-text-secondary font-bold uppercase tracking-wider">{t.top3Assets}</p>
+                      <p className="text-lg font-semibold text-white mt-1" title={topAssets.length > 0 ? topAssets.join(', ') : t.noAssets}>
+                        {topAssets.length > 0 ? topAssets.join(', ') : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-text-secondary font-bold uppercase tracking-wider">{t.dominantTrend}</p>
+                      <p className="text-lg font-semibold text-white mt-1">{dominantTrend}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-text-secondary font-bold uppercase tracking-wider">{t.avgConfidence}</p>
+                      <p className="text-lg font-semibold text-white mt-1">{averageConfidence.toFixed(0)}%</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-text-secondary font-bold uppercase tracking-wider">{t.dominantTrend}</p>
-                  <p className="text-lg font-semibold text-white mt-1">{dominantTrend}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-text-secondary font-bold uppercase tracking-wider">{t.avgConfidence}</p>
-                  <p className="text-lg font-semibold text-white mt-1">{averageConfidence.toFixed(0)}%</p>
-                </div>
-              </div>
-            </div>
 
-            <div className="space-y-8">
-                <div className={`bg-gradient-to-br ${tabSide === 'buy' ? 'from-green-600/20 border-green-500/50' : 'from-red-600/20 border-red-500/50'} via-surface/50 to-surface/90 border rounded-lg p-4 md:p-6 shadow-2xl relative overflow-hidden`}>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-                        <div className="flex items-center text-white">
-                            <div className={`bg-${tabSide === 'buy' ? 'green' : 'red'}-500/20 p-3 rounded-full`}>
-                                {tabSide === 'buy' ? <BuyIcon className="h-8 w-8 text-green-300" /> : <SellIcon className="h-8 w-8 text-red-300" />}
+                <div className="space-y-8">
+                    <div className={`bg-gradient-to-br ${tabSide === 'buy' ? 'from-green-600/20 border-green-500/50' : 'from-red-600/20 border-red-500/50'} via-surface/50 to-surface/90 border rounded-lg p-4 md:p-6 shadow-2xl relative overflow-hidden`}>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
+                            <div className="flex items-center text-white">
+                                <div className={`bg-${tabSide === 'buy' ? 'green' : 'red'}-500/20 p-3 rounded-full`}>
+                                    {tabSide === 'buy' ? <BuyIcon className="h-8 w-8 text-green-300" /> : <SellIcon className="h-8 w-8 text-red-300" />}
+                                </div>
+                                <h3 className="text-2xl font-bold ml-4">{tabSide === 'buy' ? t.buyOpportunities : t.sellOpportunities}</h3>
                             </div>
-                            <h3 className="text-2xl font-bold ml-4">{tabSide === 'buy' ? t.buyOpportunities : t.sellOpportunities}</h3>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                 <button onClick={() => setTabSide("buy")} className={`px-4 py-1.5 rounded-md font-semibold text-sm transition-colors ${tabSide === "buy" ? "bg-success text-white shadow-md" : "bg-surface hover:bg-border text-text-secondary"}`}>
+                                    {t.buy}
+                                </button>
+                                <button onClick={() => setTabSide("sell")} className={`px-4 py-1.5 rounded-md font-semibold text-sm transition-colors ${tabSide === "sell" ? "bg-danger text-white shadow-md" : "bg-surface hover:bg-border text-text-secondary"}`}>
+                                    {t.sell}
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                             <button onClick={() => setTabSide("buy")} className={`px-4 py-1.5 rounded-md font-semibold text-sm transition-colors ${tabSide === "buy" ? "bg-success text-white shadow-md" : "bg-surface hover:bg-border text-text-secondary"}`}>
-                                {t.buy}
-                            </button>
-                            <button onClick={() => setTabSide("sell")} className={`px-4 py-1.5 rounded-md font-semibold text-sm transition-colors ${tabSide === "sell" ? "bg-danger text-white shadow-md" : "bg-surface hover:bg-border text-text-secondary"}`}>
-                                {t.sell}
-                            </button>
+                        
+                        <div className="flex flex-wrap items-center gap-2 mb-6 border-t border-b border-border/50 py-4">
+                            <span className="text-sm font-semibold text-text-secondary mr-2">Horizonte:</span>
+                            {(Object.keys(HORIZON_LABELS) as HorizonKey[]).map(h =>(
+                              <button key={h}
+                                onClick={()=>setTabH(h)}
+                                className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${tabH === h ? "bg-primary text-white" : "bg-surface hover:bg-border text-text-secondary"}`}>
+                                {HORIZON_LABELS[h]}
+                              </button>
+                            ))}
+                             <button
+                                  onClick={handleExport}
+                                  className="ml-auto px-4 py-2 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-700 transition-colors"
+                                >
+                                  Exportar JSON ({HORIZON_LABELS[tabH]})
+                             </button>
                         </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-2 mb-6 border-t border-b border-border/50 py-4">
-                        <span className="text-sm font-semibold text-text-secondary mr-2">Horizonte:</span>
-                        {(Object.keys(HORIZON_LABELS) as HorizonKey[]).map(h =>(
-                          <button key={h}
-                            onClick={()=>setTabH(h)}
-                            className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${tabH === h ? "bg-primary text-white" : "bg-surface hover:bg-border text-text-secondary"}`}>
-                            {HORIZON_LABELS[h]}
-                          </button>
-                        ))}
-                         <button
-                              onClick={handleExport}
-                              className="ml-auto px-4 py-2 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-700 transition-colors"
-                            >
-                              Exportar JSON ({HORIZON_LABELS[tabH]})
-                         </button>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                       {horizonsLoading[tabH] ? (
-                            [...Array(4)].map((_, i) => <SignalBlockSkeleton key={i} />)
-                       ) : (
-                            <SignalGrid
-                                signals={tabSide === 'buy' ? buyFiltered : sellFiltered}
-                                side={tabSide}
-                                onReroll={handleReroll}
-                                onAddSignal={handleAddSignal}
-                                isRerolling={isRerolling}
-                                isAddingSignal={isAddingSignal}
-                                rerollErrors={rerollErrors}
-                                t={t}
-                           />
-                       )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                           {horizonsLoading[tabH] ? (
+                                [...Array(4)].map((_, i) => <SignalBlockSkeleton key={i} />)
+                           ) : (
+                                <SignalGrid
+                                    signals={tabSide === 'buy' ? buyFiltered : sellFiltered}
+                                    side={tabSide}
+                                    onReroll={handleReroll}
+                                    onAddSignal={handleAddSignal}
+                                    isRerolling={isRerolling}
+                                    isAddingSignal={isAddingSignal}
+                                    rerollErrors={rerollErrors}
+                                    t={t}
+                               />
+                           )}
+                        </div>
                     </div>
                 </div>
             </div>

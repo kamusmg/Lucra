@@ -1,3 +1,4 @@
+
 export const translations = {
     pt: {
         // General
@@ -114,7 +115,8 @@ export const translations = {
 
         // Live Positions Panel (Phase 4.5)
         livePositionsDescription: 'Monitoramento em tempo real de todas as operações virtuais ativas. As posições são abertas automaticamente com base nos "Sinais do Dia" e fechadas quando atingem o alvo ou o stop.',
-        noActiveTrades: 'Nenhuma operação ativa no momento. Novos sinais do dia abrirão posições aqui.',
+        noActiveTrades: 'Nenhuma operação ativa no momento.',
+        monitoringPendingSignals: 'Monitorando {count} sinais pendentes. Aguardando condições de mercado para abrir posições.',
         pnl: 'P/L',
         pnlNet: 'P/L (Líquido)',
         currentPrice: 'Preço Atual',
@@ -403,7 +405,8 @@ export const translations = {
 
         // Live Positions Panel (Phase 4.5)
         livePositionsDescription: 'Real-time monitoring of all active virtual trades. Positions are opened automatically based on "Signals of the Day" and closed when they hit their target or stop.',
-        noActiveTrades: 'No active trades at the moment. New signals of the day will open positions here.',
+        noActiveTrades: 'No active trades at the moment.',
+        monitoringPendingSignals: 'Monitoring {count} pending signals. Awaiting market conditions to open positions.',
         pnl: 'P/L',
         pnlNet: 'P/L (Net)',
         currentPrice: 'Current Price',

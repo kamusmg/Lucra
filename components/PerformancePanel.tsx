@@ -1,5 +1,4 @@
 
-
 import React, { useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -97,32 +96,38 @@ const TradingJournalTable: React.FC<{ trades: CompletedTrade[]; t: any }> = ({ t
 
 
 const PerformancePanel: React.FC = () => {
-    const { completedTrades } = useData();
+    const { completedTrades, isRecalculating } = useData();
     const { language } = useLanguage();
     const t = translations[language];
 
     const metrics = useMemo(() => calculateMetrics(completedTrades), [completedTrades]);
     
-    if (completedTrades.length === 0) {
-        return (
-            <div className="text-center py-10">
-                <TrophyIcon className="h-16 w-16 text-primary mx-auto opacity-30 mb-4" />
-                <p className="text-lg text-text-secondary">{t.noTradesYet}</p>
-            </div>
-        );
-    }
-
     return (
-        <div>
-            <p className="text-sm text-text-secondary mb-6">{t.performancePanelDescription}</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <MetricCard title={t.winRate} value={formatPercentage(metrics.winRate)} icon={<TrendingUpIcon />} colorClass={metrics.winRate >= 50 ? 'text-success' : 'text-danger'} />
-                <MetricCard title={t.profitFactor} value={metrics.profitFactor?.toFixed(2) ?? '∞'} icon={<TrophyIcon />} colorClass={metrics.profitFactor && metrics.profitFactor >= 1 ? 'text-success' : 'text-danger'} />
-                <MetricCard title={t.totalNetProfit} value={formatCurrency(metrics.totalNetProfit)} icon={<DollarSignIcon />} colorClass={metrics.totalNetProfit >= 0 ? 'text-success' : 'text-danger'} />
-                <MetricCard title={t.avgRoi} value={formatPercentage(metrics.averageRoi)} icon={<PercentIcon />} colorClass={metrics.averageRoi >= 0 ? 'text-success' : 'text-danger'} />
-            </div>
-
-            <TradingJournalTable trades={completedTrades} t={t} />
+        <div className="relative">
+             {isRecalculating && (
+                <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center rounded-lg z-20">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            )}
+            
+            {completedTrades.length === 0 ? (
+                <div className="text-center py-10">
+                    <TrophyIcon className="h-16 w-16 text-primary mx-auto opacity-30 mb-4" />
+                    <p className="text-lg text-text-secondary">{t.noTradesYet}</p>
+                </div>
+            ) : (
+                 <div>
+                    <p className="text-sm text-text-secondary mb-6">{t.performancePanelDescription}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <MetricCard title={t.winRate} value={formatPercentage(metrics.winRate)} icon={<TrendingUpIcon />} colorClass={metrics.winRate >= 50 ? 'text-success' : 'text-danger'} />
+                        <MetricCard title={t.profitFactor} value={metrics.profitFactor?.toFixed(2) ?? '∞'} icon={<TrophyIcon />} colorClass={metrics.profitFactor && metrics.profitFactor >= 1 ? 'text-success' : 'text-danger'} />
+                        <MetricCard title={t.totalNetProfit} value={formatCurrency(metrics.totalNetProfit)} icon={<DollarSignIcon />} colorClass={metrics.totalNetProfit >= 0 ? 'text-success' : 'text-danger'} />
+                        <MetricCard title={t.avgRoi} value={formatPercentage(metrics.averageRoi)} icon={<PercentIcon />} colorClass={metrics.averageRoi >= 0 ? 'text-success' : 'text-danger'} />
+                    </div>
+        
+                    <TradingJournalTable trades={completedTrades} t={t} />
+                </div>
+            )}
         </div>
     );
 };

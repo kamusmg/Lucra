@@ -1,13 +1,11 @@
 
-
-
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { translations } from '../utils/translations';
 import { SentimentAnalysis, Narrative } from '../types';
 import { ASSET_LOGOS as ALL_ASSET_LOGOS } from './MajorAssetSection.tsx';
-import InfoTooltip from './InfoTooltip.tsx';
+import ChevronDownIcon from './ChevronDownIcon.tsx';
 
 
 // Add missing logos for sentiment panel specifically
@@ -72,6 +70,33 @@ const SentimentMeter: React.FC<{ score: number; t: any }> = ({ score, t }) => {
     );
 };
 
+const NarrativeAccordion: React.FC<{ narrative: Narrative; t: any }> = ({ narrative, t }) => {
+    const impactColorMap: { [key: string]: { text: string; bg: string; border: string; } } = {
+        'Alto': { text: 'text-red-300', bg: 'bg-red-900/50', border: 'border-red-700/50' },
+        'Médio': { text: 'text-yellow-300', bg: 'bg-yellow-800/50', border: 'border-yellow-600/50' },
+        'Baixo': { text: 'text-blue-300', bg: 'bg-blue-900/50', border: 'border-blue-700/50' },
+    };
+
+    const config = impactColorMap[narrative.impact] || { text: 'text-gray-300', bg: 'bg-gray-700/50', border: 'border-gray-600/50' };
+
+    return (
+        <details className="group bg-background/30 rounded-lg border border-border/30 transition-all duration-300 open:bg-background/50 open:border-primary/30">
+            <summary className="cursor-pointer list-none flex items-center justify-between p-2 font-semibold text-sm transition-colors">
+                <span className="font-semibold text-text group-hover:text-white">{narrative.narrative}</span>
+                <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${config.bg} ${config.text} border ${config.border}`}>
+                        {t.impact}: {narrative.impact}
+                    </span>
+                    <ChevronDownIcon className="h-4 w-4 text-text-secondary transition-transform duration-300 group-open:rotate-180" />
+                </div>
+            </summary>
+            <div className="border-t border-border/30 p-3 text-sm text-text-secondary leading-relaxed">
+                {narrative.context}
+            </div>
+        </details>
+    );
+};
+
 const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) => {
     const { language } = useLanguage();
     const t = translations[language];
@@ -82,12 +107,6 @@ const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) 
         'Neutro': 'text-yellow-400', 'Neutral': 'text-yellow-400',
         'Altista': 'text-green-400', 'Bullish': 'text-green-400',
         'Muito Altista': 'text-emerald-400', 'Very Bullish': 'text-emerald-400',
-    };
-
-    const impactColorMap: { [key: string]: string } = {
-        'Alto': 'bg-red-500',
-        'Médio': 'bg-yellow-400',
-        'Baixo': 'bg-blue-400',
     };
     
     return (
@@ -106,17 +125,9 @@ const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) 
             
             <div className="space-y-3 my-3">
                  <h5 className="text-xs font-bold text-text-secondary uppercase tracking-wider">{t.dominantNarratives}</h5>
-                 <div className="flex flex-wrap gap-2">
+                 <div className="space-y-2">
                     {analysis.dominantNarratives.map(narrativeObj => (
-                        <InfoTooltip
-                            key={narrativeObj.narrative}
-                            text={`${t.context}: ${narrativeObj.context} | ${t.impact}: ${narrativeObj.impact}`}
-                        >
-                            <span className="flex items-center gap-1.5 px-3 py-1 text-sm font-semibold rounded-full bg-background/50 border border-border/50 cursor-help hover:border-primary/50">
-                                <div className={`w-2 h-2 rounded-full ${impactColorMap[narrativeObj.impact] || 'bg-gray-500'}`}></div>
-                                {narrativeObj.narrative}
-                            </span>
-                        </InfoTooltip>
+                        <NarrativeAccordion key={narrativeObj.narrative} narrative={narrativeObj} t={t} />
                     ))}
                  </div>
             </div>

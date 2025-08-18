@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useData } from '../contexts/DataContext.tsx';
 import MacroDashboardSkeleton from './skeletons/MacroDashboardSkeleton.tsx';
@@ -60,7 +61,7 @@ const RegimeCard: React.FC<{ indicator: MacroIndicator }> = ({ indicator }) => {
 
 
 const MacroDashboard: React.FC = () => {
-    const { presentDayData, isInitialLoading } = useData();
+    const { presentDayData, isInitialLoading, isRecalculating } = useData();
     const { language } = useLanguage();
     const t = translations[language];
 
@@ -92,25 +93,32 @@ const MacroDashboard: React.FC = () => {
     };
 
     return (
-        <div>
-            <h2 className="text-3xl font-bold text-text mb-6 pb-2 border-b-2 border-border">Painel de Controle Macro</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {regimeIndicator && <RegimeCard indicator={regimeIndicator} />}
-                {primaryIndicators.map((indicator, index) => renderIndicatorCard(indicator, index))}
-            </div>
-
-            {secondaryIndicators.length > 0 && (
-                 <details className="group mt-4 bg-surface/30 rounded-lg border border-transparent open:border-border/50 transition-all">
-                    <summary className="cursor-pointer list-none flex items-center justify-center gap-2 text-sm font-semibold text-text-secondary hover:text-primary transition-colors p-3">
-                        <span className="group-open:hidden">{t.showMoreIndicators}</span>
-                        <span className="hidden group-open:inline">{t.showLessIndicators}</span>
-                        <ChevronDownIcon className="h-4 w-4 transition-transform duration-300 group-open:rotate-180" />
-                    </summary>
-                    <div className="p-4 border-t border-border/50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {secondaryIndicators.map((indicator, index) => renderIndicatorCard(indicator, `secondary-${index}`))}
-                    </div>
-                </details>
+        <div className="relative">
+             {isRecalculating && (
+                <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center rounded-lg z-20">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
             )}
+            <div>
+                <h2 className="text-3xl font-bold text-text mb-6 pb-2 border-b-2 border-border">Painel de Controle Macro</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {regimeIndicator && <RegimeCard indicator={regimeIndicator} />}
+                    {primaryIndicators.map((indicator, index) => renderIndicatorCard(indicator, index))}
+                </div>
+
+                {secondaryIndicators.length > 0 && (
+                     <details className="group mt-4 bg-surface/30 rounded-lg border border-transparent open:border-border/50 transition-all">
+                        <summary className="cursor-pointer list-none flex items-center justify-center gap-2 text-sm font-semibold text-text-secondary hover:text-primary transition-colors p-3">
+                            <span className="group-open:hidden">{t.showMoreIndicators}</span>
+                            <span className="hidden group-open:inline">{t.showLessIndicators}</span>
+                            <ChevronDownIcon className="h-4 w-4 transition-transform duration-300 group-open:rotate-180" />
+                        </summary>
+                        <div className="p-4 border-t border-border/50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {secondaryIndicators.map((indicator, index) => renderIndicatorCard(indicator, `secondary-${index}`))}
+                        </div>
+                    </details>
+                )}
+            </div>
         </div>
     );
 };

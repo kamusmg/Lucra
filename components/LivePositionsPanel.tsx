@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -49,7 +48,7 @@ const StatusIndicator: React.FC<{ status: OrderStatus; details: string; t: any }
 
 
 const LivePositionsPanel: React.FC = () => {
-    const { activeTrades } = useData();
+    const { activeTrades, pendingSignals, isRecalculating } = useData();
     const { language } = useLanguage();
     const t = translations[language];
 
@@ -63,13 +62,29 @@ const LivePositionsPanel: React.FC = () => {
     });
 
     return (
-        <div>
+        <div className="relative">
+             {isRecalculating && (
+                <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center rounded-lg z-20">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            )}
             <p className="text-sm text-text-secondary mb-6">{t.livePositionsDescription}</p>
             
             {sortedTrades.length === 0 ? (
                 <div className="text-center py-10">
-                    <ActivityIcon className="h-16 w-16 text-primary mx-auto opacity-30 mb-4" />
-                    <p className="text-lg text-text-secondary">{t.noActiveTrades}</p>
+                    {pendingSignals.length > 0 ? (
+                         <>
+                            <ClockIcon className="h-16 w-16 text-primary mx-auto opacity-50 mb-4 animate-pulse" />
+                            <p className="text-lg text-text-secondary">
+                                {t.monitoringPendingSignals.replace('{count}', String(pendingSignals.length))}
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <ActivityIcon className="h-16 w-16 text-primary mx-auto opacity-30 mb-4" />
+                            <p className="text-lg text-text-secondary">{t.noActiveTrades}</p>
+                        </>
+                    )}
                 </div>
             ) : (
                 <div className="max-h-[600px] overflow-y-auto pr-2 bg-background/30 rounded-lg border border-border/50 scrollbar-thin scrollbar-thumb-border scrollbar-track-surface">
