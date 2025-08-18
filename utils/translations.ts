@@ -13,7 +13,7 @@ export const translations = {
         
         // App Header & Footer
         appTitle: 'Lucra Crypto',
-        appSubtitle: 'IA para prever o mercado',
+        appSubtitle: 'Inteligência Adaptativa para Trading',
         recalculateButton: 'Recalcular Análise',
         recalculatingButton: 'Analisando...',
         recalculateTitle: 'Executar um novo ciclo de análise',
@@ -306,7 +306,7 @@ export const translations = {
 
         // App Header & Footer
         appTitle: 'Lucra Crypto',
-        appSubtitle: 'AI to Predict the Market',
+        appSubtitle: 'Adaptive Intelligence for Trading',
         recalculateButton: 'Recalculate Analysis',
         recalculatingButton: 'Analyzing...',
         recalculateTitle: 'Run a new analysis cycle',

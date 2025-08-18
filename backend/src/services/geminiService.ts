@@ -131,7 +131,7 @@ const fundamentalAnalysisDirective = `
         -   **tokenomicsScore (0-100):** Avalie a distribuição de tokens, o modelo de inflação/deflação e os casos de uso do token.
         -   **developerActivityScore (0-100):** Avalie a frequência e a qualidade dos commits no GitHub e a atividade geral da comunidade de desenvolvedores.
         -   **summary:** Forneça um resumo conciso dos pontos fortes e fracos da análise fundamentalista.
-    2.  **Nota Geral ('grade'):** Com base na análise acima e na sua avaliação técnica, atribua uma nota geral ao ativo: 'A' (excepcional), 'B' (sólido), 'C' (médio), 'D' (arriscado), 'F' (evitar).
+    2.  **Nota Geral ('grade'):** Com base na análise acima e na sua avaliação técnica, atribua uma nota geral ao ativo: 'A' (excepcional), 'B' (sólido), 'C' (médio), 'D' (arriskado), 'F' (evitar).
 `;
 
 const structuredDriversDirective = `
@@ -277,38 +277,6 @@ const sentimentAnalysisSchema = {
         intelligenceBriefing: { type: Type.STRING, description: "Um parágrafo coeso que sintetiza a análise e seu impacto potencial no preço." },
     },
     required: ["assetTicker", "sentimentScore", "sentimentLabel", "dominantNarratives", "intelligenceBriefing"],
-};
-
-const chartAnalysisRecommendationSchema = {
-    type: Type.OBJECT,
-    properties: {
-        tipo: { type: Type.STRING, enum: ['COMPRA', 'VENDA', 'LONG', 'SHORT', 'NEUTRO'] },
-        precoEntrada: { type: Type.NUMBER },
-        stopLoss: { type: Type.NUMBER },
-        takeProfit: { type: Type.NUMBER },
-        confiancaPercentual: { type: Type.NUMBER },
-        entryDatetime: { type: Type.STRING },
-        exitDatetime: { type: Type.STRING },
-    },
-    required: ["tipo", "precoEntrada", "stopLoss", "takeProfit", "confiancaPercentual"]
-};
-
-const chartAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        assetIdentification: { type: Type.STRING },
-        timeframe: { type: Type.STRING },
-        globalSignal: { type: Type.STRING, enum: ['bullish', 'bearish', 'neutral'] },
-        technicalDrivers: {
-            type: Type.OBJECT,
-            additionalProperties: { oneOf: [{ type: Type.STRING }, { type: Type.BOOLEAN }, { type: Type.NUMBER }] }
-        },
-        recomendacao: chartAnalysisRecommendationSchema,
-        strongPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
-        weakPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
-        specialModes: { type: Type.ARRAY, items: { type: Type.STRING } },
-    },
-    required: ["assetIdentification", "timeframe", "globalSignal", "technicalDrivers", "recomendacao"]
 };
 
 /**
@@ -637,45 +605,81 @@ export const fetchTacticalAnalysis = async (assetTicker: string, livePrice: stri
     }
 };
 
+const chartAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        assetIdentification: { type: Type.STRING, description: "Identificação do ativo (ex: BTC/USDT)." },
+        timeframe: { type: Type.STRING, description: "O timeframe do gráfico (ex: 4 Horas, 1 Dia)." },
+        globalSignal: { type: Type.STRING, enum: ['bullish', 'bearish', 'neutral'], description: "Sinal técnico global (tendência principal)." },
+        technicalDrivers: {
+            type: Type.OBJECT,
+            description: "Objeto com os principais indicadores técnicos. Ex: { 'RSI_Divergence': 'bullish' }",
+             additionalProperties: {
+                oneOf: [
+                    { type: Type.STRING },
+                    { type: Type.BOOLEAN },
+                    { type: Type.NUMBER }
+                ]
+            }
+        },
+        recomendacao: {
+            type: Type.OBJECT,
+            properties: {
+                tipo: { type: Type.STRING, enum: ['COMPRA', 'VENDA', 'LONG', 'SHORT', 'NEUTRO'] },
+                precoEntrada: { type: Type.NUMBER },
+                stopLoss: { type: Type.NUMBER },
+                takeProfit: { type: Type.NUMBER },
+                confiancaPercentual: { type: Type.NUMBER },
+            },
+            required: ["tipo", "precoEntrada", "stopLoss", "takeProfit", "confiancaPercentual"],
+        },
+        strongPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+        weakPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+        specialModes: { type: Type.ARRAY, items: { type: Type.STRING } },
+    },
+    required: ["assetIdentification", "timeframe", "globalSignal", "technicalDrivers", "recomendacao"],
+};
+
 export const analyzeChartImage = async (base64Image: string, mimeType: string, language: 'pt' | 'en'): Promise<ChartAnalysisResult> => {
     const imagePart = {
         inlineData: {
-            mimeType: mimeType,
+            mimeType,
             data: base64Image,
         },
     };
 
-    const textPart = {
-        text: `
-            **DIRETIVA DE ANÁLISE DE GRÁFICO TÉCNICO v2.0**
-            Você é a IA 'Alpha'. Sua missão é analisar a imagem de um gráfico de trading fornecida e extrair informações operacionais precisas.
+    const prompt = `
+        **DIRETIVA: ANALISTA DE GRÁFICO TÉCNICO**
+        Sua tarefa é analisar a imagem de um gráfico de trading de criptomoedas e fornecer uma análise operacional completa.
 
-            **TAREFA:**
-            1.  **Identificação:** Identifique o ativo (ticker) e o timeframe do gráfico.
-            2.  **Sinal Global:** Determine a tendência geral (bullish, bearish, neutral).
-            3.  **Drivers Técnicos:** Liste os indicadores chave que justificam sua análise no objeto 'technicalDrivers'.
-            4.  **Recomendação:** Forneça uma recomendação operacional CLARA e COMPLETA (COMPRA, VENDA, NEUTRO) com preço de entrada, alvo (takeProfit), stop-loss e uma porcentagem de confiança.
-            5.  **Justificativa:** Forneça os pontos fortes e fracos que sustentam a recomendação.
-            6.  **IDIOMA:** A resposta DEVE ser em ${language === 'pt' ? 'Português' : 'Inglês'}.
+        **PROCESSO DE ANÁLISE:**
+        1.  **Identificação:** Identifique o ativo (ex: BTC/USDT) e o timeframe do gráfico.
+        2.  **Sinal Global:** Determine a tendência principal (bullish, bearish, neutral).
+        3.  **Drivers Técnicos:** Identifique os 3-5 indicadores ou padrões gráficos mais importantes que sustentam sua análise. Use o objeto 'technicalDrivers'.
+        4.  **Recomendação Operacional:** Forneça uma recomendação clara de 'COMPRA', 'VENDA' ou 'NEUTRO', com preço de entrada, alvo (take profit) e stop-loss.
+        5.  **Confiança:** Calcule um percentual de confiança para a operação.
+        6.  **Justificativa:** Liste os pontos fortes e fracos da configuração gráfica.
 
-            **Formato:** Sua resposta DEVE ser um único objeto JSON que obedece estritamente ao schema fornecido.
-        `
-    };
+        **REGRAS:**
+        -   Sua análise deve ser puramente técnica, baseada apenas na imagem fornecida.
+        -   Os preços devem ser realistas e derivados diretamente do gráfico.
+        -   A resposta DEVE ser um único objeto JSON que obedece estritamente ao schema fornecido.
+        -   O idioma da resposta DEVE ser ${language === 'pt' ? 'Português' : 'Inglês'}.
+    `;
 
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: { parts: [imagePart, textPart] },
+            contents: { parts: [{ text: prompt }, imagePart] },
             config: {
                 responseMimeType: "application/json",
                 responseSchema: chartAnalysisSchema,
             },
         });
-
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as ChartAnalysisResult;
     } catch (error) {
-        console.error("Error analyzing chart image with Gemini API:", error);
+        console.error("Error analyzing chart image from Gemini API:", error);
         throw new Error(`Falha na análise de imagem da IA: ${error instanceof Error ? error.message : String(error)}`);
     }
 };

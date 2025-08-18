@@ -55,6 +55,10 @@ export class ApiClient {
     return this.transport.post<{ text: string }>('/api/chat', payload);
   };
   
+  analyzeChartImage = (base64Image: string, mimeType: string, language: 'pt' | 'en'): Promise<ChartAnalysisResult> => {
+    return this.transport.post<ChartAnalysisResult>('/api/analysis/chart', { base64Image, mimeType, language });
+  }
+
   fetchSupervisorDirective = (analysis: SelfAnalysis, evolutionPrompt: string): Promise<{ directive: string }> => {
       return this.transport.post<{ directive: string }>('/api/analysis/supervisor-directive', { analysis, evolutionPrompt });
   };
@@ -63,10 +67,6 @@ export class ApiClient {
     return this.transport.get<AuditReport>('/api/analysis/robustness-audit');
   };
   
-  exportVereditoJSONByHorizon = (horizon: HorizonKey): Promise<{ filename: string; payload: any[] }> => {
-      return this.transport.get<{ filename: string; payload: any[] }>(`/api/export/veredito/${horizon}`);
-  };
-
   fetchMemeCoinAnalysis = (): Promise<MemeCoinSignal[]> => {
     return this.transport.get<MemeCoinSignal[]>('/api/analysis/meme-coins');
   };
@@ -77,10 +77,6 @@ export class ApiClient {
 
   fetchHistoricalPrice = (assetName: string, timestamp: number): Promise<{ price: string | null }> => {
     return this.transport.post<{ price: string | null }>('/api/market/historical-price', { assetName, timestamp });
-  };
-
-  analyzeChartImage = (base64Image: string, mimeType: string, language: 'pt' | 'en'): Promise<ChartAnalysisResult> => {
-    return this.transport.post<ChartAnalysisResult>('/api/analysis/chart', { base64Image, mimeType, language });
   };
 
   fetchSentimentAnalysis = (assets: string[], language: 'pt' | 'en'): Promise<SentimentAnalysis[]> => {

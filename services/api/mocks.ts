@@ -4,7 +4,6 @@
 // This allows the app to run fully self-contained in environments like AI Studio.
 
 import * as geminiService from '../geminiService.ts';
-import * as vereditoExportService from '../vereditoExportService.ts';
 import { HorizonKey, HORIZON_LABELS } from '../horizonPolicy.ts';
 // Import fetchPriceForTicker for tactical analysis mock
 import { fetchPrices as marketServiceFetchPrices, fetchPriceForTicker } from '../marketService.ts';
@@ -18,8 +17,6 @@ export const MockTransport = {
         console.log(`[MOCK GET] ${path}`);
         await simulateLatency();
 
-        const vereditoMatch = path.match(/\/api\/export\/veredito\/(24h|7d|30d|1y)/);
-
         if (path === '/api/analysis/present-day') {
             const data = await geminiService.runFullPipeline(10000, 1); // Default values for GET
             return data as T;
@@ -30,11 +27,6 @@ export const MockTransport = {
         }
         if (path === '/api/analysis/robustness-audit') {
             const data = await geminiService.fetchRobustnessAudit();
-            return data as T;
-        }
-        if (vereditoMatch) {
-            const horizon = vereditoMatch[1] as HorizonKey;
-            const data = await vereditoExportService.exportVereditoJSONByHorizon(horizon);
             return data as T;
         }
         if (path === '/api/analysis/meme-coins') {
@@ -84,15 +76,15 @@ export const MockTransport = {
             const data = await geminiService.fetchTacticalAnalysis(body.assetTicker, priceInfo.price, priceInfo.source, body.language, body.horizon);
             return data as T;
         }
-        if (path === '/api/analysis/chart') {
-            const { base64Image, mimeType, language } = body;
-            const data = await geminiService.analyzeChartImage(base64Image, mimeType, language);
-            return data as T;
-        }
         if (path === '/api/chat') {
             const chat = await geminiService.createChatSession(body.presentDayData, body.backtestData);
             const response = await chat.sendMessage({ message: body.message });
             return { text: response.text } as T;
+        }
+        if (path === '/api/analysis/chart') {
+            const { base64Image, mimeType, language } = body;
+            const data = await geminiService.analyzeChartImage(base64Image, mimeType, language);
+            return data as T;
         }
         if (path === '/api/analysis/supervisor-directive') {
             const data = await geminiService.fetchSupervisorDirective(body.analysis, body.evolutionPrompt);

@@ -25,9 +25,9 @@ const AnalysisEngineIcon: React.FC<{ className?: string }> = ({ className }) => 
       />
       
       {/* Inner Symbol representing data/intelligence */}
-      <g stroke="currentColor" className="text-white" strokeWidth="1.5">
+      <g stroke="currentColor" className="text-white" strokeWidth="2">
         {/* A simple, optimistic upward trend line */}
-        <path d="M25 38l5-7 5 4 6-9" />
+        <path d="M26 40 L 42 24" />
       </g>
     </g>
   </svg>
