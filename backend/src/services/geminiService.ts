@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis } from '../types';
 import { LucraSignal } from '../types/lucra';
@@ -283,7 +284,7 @@ const sentimentAnalysisSchema = {
  * Fetches the present-day analysis part of the simulation.
  * This function requires live price data to be passed in.
  */
-export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, totalCapital: number, riskPercentage: number): Promise<PresentDayAnalysisResult> => {
+export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, totalCapital: number, riskPercentage: number, feedbackDirective?: string): Promise<PresentDayAnalysisResult> => {
     if (!livePrices || !livePrices['BTC'] || !livePrices['ETH']) {
         throw new Error('Falha ao obter dados críticos de mercado (BTC/ETH). A análise não pode prosseguir.');
     }
@@ -297,7 +298,6 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
         ${Object.entries(livePrices).map(([ticker, price]) => `- ${ticker}: ${price ? formatCurrency(parseFloat(price)) : 'N/A'}`).join('\n')}
         ---
     ` : '';
-
     const dynamicRiskPrompt = `
       **DIRETIVA DE DIMENSIONAMENTO DE POSIÇÃO DINÂMICO v1.0 - REGRA OBRIGATÓRIA:**
       O Supervisor forneceu os seguintes parâmetros de risco:
@@ -310,6 +310,13 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
       3. Preencha o campo \`recommendedPositionSize\` com o resultado do Tamanho da Posição.
     `;
 
+    const feedbackPrompt = feedbackDirective ? `
+        **DIRETIVA DE FEEDBACK DE PERFORMANCE REAL (DO SUPERVISOR) v1.0 - REGRA OBRIGATÓRIA:**
+        Alpha, seu desempenho histórico em paper trading nesta sessão é o seguinte:
+        ${feedbackDirective}
+        **AÇÃO:** Você DEVE ajustar sua confiança e seus critérios com base neste feedback. Se um tipo de operação (ex: VENDA) está com baixo desempenho, seja extremamente mais crítico e conservador ao gerar esses sinais. Mencione este ajuste em suas 'presentDayWeaknesses' e justifique como você está incorporando este feedback.
+        ---
+    ` : '';
 
     const prompt = `
         **DIRETIVA MESTRA DE ANÁLISE ADAPTATIVA v8.0**
@@ -351,6 +358,7 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
         2. DATA REAL: O ano atual é ${currentYear}. O 'entryDatetime' DEVE ser a data e hora atuais (${formattedDate}).
         ---
         ${priceDataPrompt}
+        ${feedbackPrompt}
 
         **PROCESSO FINAL:**
         1. **Avaliação Macro:** Execute o Passo 1 e gere o 'macroContext' (mínimo 6 indicadores).
@@ -410,14 +418,14 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
  * Executes the first step of the pipeline: fetching raw analysis data.
  * @returns A promise that resolves to the raw PresentDayAnalysisResult.
  */
-export const runFullPipeline = async (totalCapital: number, riskPercentage: number): Promise<PresentDayAnalysisResult> => {
+export const runFullPipeline = async (totalCapital: number, riskPercentage: number, feedbackDirective?: string): Promise<PresentDayAnalysisResult> => {
     try {
         const pricesWithSource = await fetchPrices(['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'LTC', 'MATIC', 'DOT']);
         const prices: LivePrices = {};
         for (const ticker in pricesWithSource) {
             prices[ticker] = pricesWithSource[ticker].price;
         }
-        const analysis = await fetchPresentDayAnalysis(prices, totalCapital, riskPercentage);
+        const analysis = await fetchPresentDayAnalysis(prices, totalCapital, riskPercentage, feedbackDirective);
         return analysis;
     } catch (error) {
         console.error("Error in runFullPipeline:", error);
@@ -774,7 +782,7 @@ export const fetchSentimentAnalysis = async (assets: string[], language: 'pt' | 
 export const fetchBacktestAnalysis = async (): Promise<BacktestAnalysisResult> => {
     // This function is complex and would require historical data simulation.
     // For now, it will return a mocked or simplified response.
-    throw new Error("fetchBacktestAnalysis is not implemented on the backend yet.");
+    throw new Error("fetchBacktestAnalysis is not implemented on the backend mock.");
 };
 
 export const createChatSession = async (
@@ -803,10 +811,10 @@ export const fetchSupervisorDirective = async (
     analysis: SelfAnalysis,
     evolutionPrompt: string
 ): Promise<{ directive: string }> => {
-    throw new Error("fetchSupervisorDirective is not implemented on the backend yet.");
+    throw new Error("fetchSupervisorDirective is not implemented on the backend mock.");
 };
 
 
 export const fetchRobustnessAudit = async (): Promise<AuditReport> => {
-    throw new Error("fetchRobustnessAudit is not implemented on the backend yet.");
+    throw new Error("fetchRobustnessAudit is not implemented on the backend mock.");
 };

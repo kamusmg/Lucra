@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -6,6 +7,7 @@ import { translations } from '../utils/translations';
 import { SentimentAnalysis, Narrative } from '../types';
 import { ASSET_LOGOS as ALL_ASSET_LOGOS } from './MajorAssetSection.tsx';
 import ChevronDownIcon from './ChevronDownIcon.tsx';
+import StarIcon from './icons/StarIcon.tsx';
 
 
 // Add missing logos for sentiment panel specifically
@@ -97,7 +99,7 @@ const NarrativeAccordion: React.FC<{ narrative: Narrative; t: any }> = ({ narrat
     );
 };
 
-const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) => {
+const SentimentCard: React.FC<{ analysis: SentimentAnalysis, isWatched: boolean }> = ({ analysis, isWatched }) => {
     const { language } = useLanguage();
     const t = translations[language];
     
@@ -110,7 +112,12 @@ const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) 
     };
     
     return (
-        <div className="bg-surface/50 border border-border/70 rounded-xl p-4 flex flex-col">
+        <div className="relative bg-surface/50 border border-border/70 rounded-xl p-4 flex flex-col">
+            {isWatched && (
+                <div className="absolute top-2 right-2 text-yellow-400" title="Da sua Watchlist">
+                    <StarIcon className="h-4 w-4" />
+                </div>
+            )}
             <div className="flex items-center gap-3 mb-2">
                 <img src={ASSET_LOGOS[analysis.assetTicker] || ''} alt={`${analysis.assetTicker} logo`} className="h-10 w-10" />
                 <div>
@@ -141,7 +148,7 @@ const SentimentCard: React.FC<{ analysis: SentimentAnalysis }> = ({ analysis }) 
 };
 
 const SentimentPanel: React.FC = () => {
-    const { sentimentData, isInitialLoading } = useData();
+    const { sentimentData, isInitialLoading, watchlist } = useData();
     const { language } = useLanguage();
     const t = translations[language];
 
@@ -166,7 +173,11 @@ const SentimentPanel: React.FC = () => {
             <p className="text-sm text-text-secondary mb-6">{t.sentimentAnalysisDescription}</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {sentimentData.map(analysis => (
-                    <SentimentCard key={analysis.assetTicker} analysis={analysis} />
+                    <SentimentCard 
+                        key={analysis.assetTicker} 
+                        analysis={analysis} 
+                        isWatched={watchlist.includes(analysis.assetTicker)}
+                    />
                 ))}
             </div>
         </div>

@@ -1,4 +1,5 @@
 
+
 import { PresentDayAssetSignal, Horizon, PresentDayAnalysisResult, BacktestAnalysisResult, ChartAnalysisResult, SelfAnalysis, AuditReport, MemeCoinSignal, SentimentAnalysis } from '../../types.ts';
 import { LivePricesWithSource } from '../marketService.ts';
 import { HorizonKey } from '../horizonPolicy.ts';
@@ -23,8 +24,8 @@ export class ApiClient {
     return this.transport.get<BacktestAnalysisResult>('/api/analysis/backtest');
   };
   
-  runFullAnalysis = (totalCapital: number, riskPercentage: number): Promise<PresentDayAnalysisResult> => {
-    return this.transport.post<PresentDayAnalysisResult>('/api/analysis/run', { totalCapital, riskPercentage });
+  runFullAnalysis = (totalCapital: number, riskPercentage: number, feedbackDirective?: string): Promise<PresentDayAnalysisResult> => {
+    return this.transport.post<PresentDayAnalysisResult>('/api/analysis/run', { totalCapital, riskPercentage, feedbackDirective });
   };
 
   fetchNewSignal = (

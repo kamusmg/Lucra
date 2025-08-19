@@ -110,7 +110,7 @@ const riskManagementDirective = `
 const sellCautionDirective = `
     **DIRETIVA DE CAUTELA EM VENDAS (DCV) v1.0 - REGRA OBRIGATÓRIA:**
     Seu histórico indica uma performance inferior em sinais de VENDA (SHORT). Portanto, aplique um escrutínio extra e seja conservador:
-    1.  **REQUISITOS MÍNIMOS:** Exija uma confluência de, no mínimo, TRÊS indicadores técnicos fortes e um Risco/Recompensa (RR) mínimo de 2.0 para QUALQUER sinal de VENDA, a menos que o regime seja 'Tendência de Baixa'.
+    1.  **REQUISITOS MÍNIMOS:** Exija uma confluência de, no mínimo, TRÊS indicadores técnicos fortes e um Risco/Recompensa (RR) mínimo de 2.0 para QUALER sinal de VENDA, a menos que o regime seja 'Tendência de Baixa'.
     2.  **AUTO-AVALIAÇÃO:** Na sua justificativa de 'presentDayWeaknesses', comente explicitamente sobre a confiança geral dos seus sinais de venda para o dia, reconhecendo esta diretiva.
     3.  **PREFERÊNCIA POR NEUTRO:** Se as condições para venda não forem ideais e o mercado não estiver em clara tendência de baixa, priorize a geração de um sinal 'NEUTRO' para preservar capital.
 `;
@@ -294,7 +294,7 @@ const sentimentAnalysisSchema = {
  * Fetches the present-day analysis part of the simulation.
  * This function requires live price data to be passed in.
  */
-export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, totalCapital: number, riskPercentage: number): Promise<PresentDayAnalysisResult> => {
+export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, totalCapital: number, riskPercentage: number, feedbackDirective?: string): Promise<PresentDayAnalysisResult> => {
     if (!livePrices || !livePrices['BTC'] || !livePrices['ETH']) {
         throw new Error('Falha ao obter dados críticos de mercado (BTC/ETH). A análise não pode prosseguir.');
     }
@@ -320,6 +320,14 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
       2. Calcule o Tamanho da Posição: \`Tamanho da Posição (USD) = riskInUSD / |(Preço de Entrada - Preço do Stop) / Preço de Entrada| \`. Use o ponto médio da 'entryRange' como 'Preço de Entrada'.
       3. Preencha o campo \`recommendedPositionSize\` com o resultado do Tamanho da Posição.
     `;
+
+    const feedbackPrompt = feedbackDirective ? `
+        **DIRETIVA DE FEEDBACK DE PERFORMANCE REAL (DO SUPERVISOR) v1.0 - REGRA OBRIGATÓRIA:**
+        Alpha, seu desempenho histórico em paper trading nesta sessão é o seguinte:
+        ${feedbackDirective}
+        **AÇÃO:** Você DEVE ajustar sua confiança e seus critérios com base neste feedback. Se um tipo de operação (ex: VENDA) está com baixo desempenho, seja extremamente mais crítico e conservador ao gerar esses sinais. Mencione este ajuste em suas 'presentDayWeaknesses' e justifique como você está incorporando este feedback.
+        ---
+    ` : '';
 
 
     const prompt = `
@@ -363,6 +371,7 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
         2. DATA REAL: O ano atual é ${currentYear}. O 'entryDatetime' DEVE ser a data e hora atuais (${formattedDate}).
         ---
         ${priceDataPrompt}
+        ${feedbackPrompt}
 
         **PROCESSO FINAL:**
         1. **Avaliação Macro:** Execute o Passo 1 e gere o 'macroContext' (mínimo 6 indicadores).
@@ -422,14 +431,14 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
  * Executes the first step of the pipeline: fetching raw analysis data.
  * @returns A promise that resolves to the raw PresentDayAnalysisResult.
  */
-export const runFullPipeline = async (totalCapital: number, riskPercentage: number): Promise<PresentDayAnalysisResult> => {
+export const runFullPipeline = async (totalCapital: number, riskPercentage: number, feedbackDirective?: string): Promise<PresentDayAnalysisResult> => {
     try {
         const pricesWithSource = await fetchPrices(['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'LTC', 'MATIC', 'DOT']);
         const prices: LivePrices = {};
         for (const ticker in pricesWithSource) {
             prices[ticker] = pricesWithSource[ticker].price;
         }
-        const analysis = await fetchPresentDayAnalysis(prices, totalCapital, riskPercentage);
+        const analysis = await fetchPresentDayAnalysis(prices, totalCapital, riskPercentage, feedbackDirective);
         return analysis;
     } catch (error) {
         console.error("Error in runFullPipeline:", error);

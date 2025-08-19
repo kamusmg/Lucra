@@ -1,4 +1,5 @@
 
+
 // This file acts as a "mock" or "simulated" backend.
 // Instead of making network requests, it calls the local AI service functions directly.
 // This allows the app to run fully self-contained in environments like AI Studio.
@@ -43,8 +44,8 @@ export const MockTransport = {
         await simulateLatency();
 
         if (path === '/api/analysis/run') {
-            const { totalCapital, riskPercentage } = body;
-            const data = await geminiService.runFullPipeline(totalCapital, riskPercentage);
+            const { totalCapital, riskPercentage, feedbackDirective } = body;
+            const data = await geminiService.runFullPipeline(totalCapital, riskPercentage, feedbackDirective);
             return data as T;
         }
         if (path === '/api/analysis/reroll-signal') {

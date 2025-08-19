@@ -1,11 +1,13 @@
 
+
 import React, { createContext, useState, useEffect, useCallback, useContext, ReactNode, useRef } from 'react';
-import { PresentDayAssetSignal, LivePrices, BacktestAnalysisResult, PresentDayAnalysisResult, MemeCoinSignal, CompletedTrade, SentimentAnalysis, Notification, ActiveTrade, ApiKey, OrderStatus } from '../types.ts';
+import { PresentDayAssetSignal, LivePrices, BacktestAnalysisResult, PresentDayAnalysisResult, MemeCoinSignal, CompletedTrade, SentimentAnalysis, Notification, ActiveTrade, ApiKey, OrderStatus, PerformanceMetrics } from '../types.ts';
 import { ApiClient } from '../services/api/client.ts';
 import { HorizonKey, HORIZON_LABELS } from '../services/horizonPolicy.ts';
 import { DateTime } from 'luxon';
 import { translations } from '../utils/translations.ts';
 import { useLanguage } from './LanguageContext.tsx';
+import { formatCurrency } from '../utils/formatters.ts';
 
 
 const SIGNAL_HISTORY_KEY = 'cryptoSignalHistory';
@@ -40,6 +42,34 @@ const parseEntryRange = (rangeStr: string | null | undefined): { start: number; 
     }
     
     return null;
+};
+
+const calculateMetrics = (trades: CompletedTrade[]): PerformanceMetrics => {
+    const totalTrades = trades.length;
+    if (totalTrades === 0) {
+        return { totalTrades: 0, wins: 0, losses: 0, winRate: 0, profitFactor: null, totalNetProfit: 0, averageRoi: 0 };
+    }
+
+    const wins = trades.filter(t => t.outcome === 'Win');
+    const losses = trades.filter(t => t.outcome === 'Loss');
+    
+    const totalProfitFromWins = wins.reduce((acc, t) => acc + t.actualProfitUsd, 0);
+    const totalLossFromLosses = Math.abs(losses.reduce((acc, t) => acc + t.actualProfitUsd, 0));
+
+    const winRate = (wins.length / totalTrades) * 100;
+    const profitFactor = totalLossFromLosses > 0 ? totalProfitFromWins / totalLossFromLosses : null;
+    const totalNetProfit = trades.reduce((acc, t) => acc + t.actualProfitUsd, 0);
+    const averageRoi = trades.reduce((acc, t) => acc + t.actualRoiPercentage, 0) / totalTrades;
+
+    return {
+        totalTrades,
+        wins: wins.length,
+        losses: losses.length,
+        winRate,
+        profitFactor,
+        totalNetProfit,
+        averageRoi,
+    };
 };
 
 
@@ -107,7 +137,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
     const [signalHistory, setSignalHistory] = useState<PresentDayAssetSignal[]>([]);
     const [history, setHistory] = useState<{ role: 'user' | 'model', text: string }[]>([]);
     const [isChatLoading, setIsChatLoading] = useState(false);
-    const [memeCoinSignals, setMemeCoinSignals] = useState<MemeCoinSignal[] | null>(null);
+    const [memeCoinSignals, setMemeCoinSignals] = useState<MemeCoinSignal[] | null>([]);
     const [completedTrades, setCompletedTrades] = useState<CompletedTrade[]>([]);
     
     // --- Phase 2: Watchlist State ---
@@ -222,12 +252,31 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
         setError(null);
         try {
             
-            const majorAssetsForSentiment = ['BTC', 'ETH', 'SOL', 'DOGE', 'SHIB', 'PEPE', 'WIF'];
+            let feedbackDirective = '';
+            if (completedTrades.length > 0) {
+                const buyTrades = completedTrades.filter(t => t.signalType === 'COMPRA');
+                const sellTrades = completedTrades.filter(t => t.signalType === 'VENDA');
+
+                const buyMetrics = calculateMetrics(buyTrades);
+                const sellMetrics = calculateMetrics(sellTrades);
+                
+                const feedbackLines = [];
+                if (buyMetrics.totalTrades > 0) {
+                    feedbackLines.push(`- Desempenho (COMPRA): ${buyMetrics.wins} vitórias, ${buyMetrics.losses} derrotas. Taxa de Acerto: ${buyMetrics.winRate.toFixed(1)}%. Lucro/Prejuízo Líquido: ${formatCurrency(buyMetrics.totalNetProfit)}.`);
+                }
+                if (sellMetrics.totalTrades > 0) {
+                    feedbackLines.push(`- Desempenho (VENDA): ${sellMetrics.wins} vitórias, ${sellMetrics.losses} derrotas. Taxa de Acerto: ${sellMetrics.winRate.toFixed(1)}%. Lucro/Prejuízo Líquido: ${formatCurrency(sellMetrics.totalNetProfit)}.`);
+                }
+                feedbackDirective = feedbackLines.join('\n');
+            }
+
+            const baseAssetsForSentiment = ['BTC', 'ETH', 'SOL', 'DOGE', 'SHIB', 'PEPE', 'WIF'];
+            const uniqueAssetsForSentiment = Array.from(new Set([...baseAssetsForSentiment, ...watchlist]));
             
             const [presentDay, memeCoins, sentiment] = await Promise.all([
-                apiClient.runFullAnalysis(totalCapital, riskPercentage),
+                apiClient.runFullAnalysis(totalCapital, riskPercentage, feedbackDirective),
                 apiClient.fetchMemeCoinAnalysis(),
-                apiClient.fetchSentimentAnalysis(majorAssetsForSentiment, language)
+                apiClient.fetchSentimentAnalysis(uniqueAssetsForSentiment, language)
             ]);
             
             // Phase 4: Check for new top signal
@@ -271,7 +320,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             // React treats it as a no-op. This removes the dependency cycle.
             setIsInitialLoading(false);
         }
-    }, [apiClient, language, addNotification, t, totalCapital, riskPercentage]);
+    }, [apiClient, language, addNotification, t, totalCapital, riskPercentage, completedTrades, watchlist]);
     
 
     // Phase 4.5, Pilar 3: Simulate order execution for pending trades
