@@ -115,6 +115,19 @@ const sellCautionDirective = `
     3.  **PREFERÊNCIA POR NEUTRO:** Se as condições para venda não forem ideais e o mercado não estiver em clara tendência de baixa, priorize a geração de um sinal 'NEUTRO' para preservar capital.
 `;
 
+const entryRangeRealismDirective = `
+    **DIRETIVA DE REALISMO NA FAIXA DE ENTRADA v1.0 - REGRA OBRIGATÓRIA:**
+    Feedback do Supervisor: Suas faixas de entrada anteriores ('entryRange') são tecnicamente perfeitas, mas irrealisticamente apertadas. Elas estão fazendo com que as ordens não sejam executadas por margens mínimas (slippage, taxas).
+
+    **AÇÃO CORRETIVA OBRIGATÓRIA:**
+    Para CADA SINAL (COMPRA ou VENDA), você DEVE criar uma 'entryRange' mais ampla e prática.
+    1.  **Base de Cálculo:** Use um ponto de referência técnico recente e válido (ex: a mínima das últimas 24h para uma COMPRA, ou a máxima para uma VENDA) como ponto de partida.
+    2.  **Adicionar "Gordura":** A partir do seu ponto de entrada "ideal", adicione uma margem de segurança para aumentar a probabilidade de execução.
+        -   **Para BTC/ETH (Baixa Volatilidade Relativa):** Crie uma faixa com uma amplitude de pelo menos **0.5% a 0.7%**. Exemplo: Se o ponto ideal for $100, a faixa poderia ser "$99.50 - $100.20".
+        -   **Para Altcoins (Alta Volatilidade):** Crie uma faixa com uma amplitude de pelo menos **1.0% a 1.5%**. A volatilidade maior exige uma banda mais larga.
+    3.  **Justificativa:** Sua lógica deve ser "melhor uma boa entrada executada do que uma entrada perfeita perdida". As faixas devem refletir isso.
+`;
+
 
 const dceDirective = `
     **DIRETIVA DE CHECKLIST DE ENTRADA (DCE) - REGRA PERMANENTE:**
@@ -350,6 +363,7 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
 
         **PASSO 4: GERAR SINAIS COM ANÁLISE COMPLETA E VALIDAÇÃO DE RISCO**
         ${riskManagementDirective} 
+        ${entryRangeRealismDirective}
         ${dceDirective}
         ${fundamentalAnalysisDirective}
         ${structuredDriversDirective}
