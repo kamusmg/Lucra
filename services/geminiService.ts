@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis, Narrative } from '../types.ts';
 import { LucraSignal } from '../types/lucra.ts';
@@ -106,9 +107,18 @@ const riskManagementDirective = `
         -   O RR Mínimo padrão é **1.5**, mas este valor é sobrescrito pela Diretiva de Risco Adaptativa.
 `;
 
+const sellCautionDirective = `
+    **DIRETIVA DE CAUTELA EM VENDAS (DCV) v1.0 - REGRA OBRIGATÓRIA:**
+    Seu histórico indica uma performance inferior em sinais de VENDA (SHORT). Portanto, aplique um escrutínio extra e seja conservador:
+    1.  **REQUISITOS MÍNIMOS:** Exija uma confluência de, no mínimo, TRÊS indicadores técnicos fortes e um Risco/Recompensa (RR) mínimo de 2.0 para QUALQUER sinal de VENDA, a menos que o regime seja 'Tendência de Baixa'.
+    2.  **AUTO-AVALIAÇÃO:** Na sua justificativa de 'presentDayWeaknesses', comente explicitamente sobre a confiança geral dos seus sinais de venda para o dia, reconhecendo esta diretiva.
+    3.  **PREFERÊNCIA POR NEUTRO:** Se as condições para venda não forem ideais e o mercado não estiver em clara tendência de baixa, priorize a geração de um sinal 'NEUTRO' para preservar capital.
+`;
+
+
 const dceDirective = `
     **DIRETIVA DE CHECKLIST DE ENTRADA (DCE) - REGRA PERMANENTE:**
-    Para CADA SINAL DE OPORTUNidade gerado (compra ou venda), você DEVE executar um checklist técnico e incluir o resultado no campo 'checklistResult'.
+    Para CADA SINAL DE OPORTUNIDADE gerado (compra ou venda), você DEVE executar um checklist técnico e incluir o resultado no campo 'checklistResult'.
     **Critérios de Avaliação (Pontuação de 0 a 10):**
     1.  **RSI(6) (Peso 2):** Long: entre 26-34. Short: entre 66-74.
     2.  **Candle de Reversão (Peso 2):** Candle com corpo cheio e volume crescente na direção do sinal.
@@ -335,6 +345,7 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
         ${dceDirective}
         ${fundamentalAnalysisDirective}
         ${structuredDriversDirective}
+        ${sellCautionDirective}
         - **REGRAS:** Execute a análise completa para os 8 sinais de oportunidade (4 de compra, 4 de venda), garantindo que CADA SINAL respeite as regras de Risco Adaptativo do Passo 2 e preencha o campo 'technicalDrivers'. O universo de análise é UNIFICADO e pode incluir tanto ativos principais (BTC, ETH) quanto altcoins.
 
         **PASSO 4.5: CALCULAR DIMENSIONAMENTO DE POSIÇÃO**
@@ -773,23 +784,21 @@ export const fetchSentimentAnalysis = async (assets: string[], language: 'pt' | 
 
 // --- Back-end only or complex functions ---
 export const fetchBacktestAnalysis = async (): Promise<BacktestAnalysisResult> => {
-    // This is a simplified mock. A real implementation would involve complex historical data fetching and simulation.
-    throw new Error("fetchBacktestAnalysis is not implemented yet.");
+    // This function is complex and would require historical data simulation.
+    // For now, it will return a mocked or simplified response.
+    throw new Error("fetchBacktestAnalysis is not implemented on the frontend mock.");
 };
+
 export const createChatSession = async (
     presentDayData: PresentDayAnalysisResult,
     backtestData: BacktestAnalysisResult | null
 ): Promise<Chat> => {
     if (chat) return chat;
     
-    // Create a simplified context to avoid stringifying huge objects
     const context = `
         **CONTEXTO DO SUPERVISOR:**
-        - **Regime de Mercado:** ${presentDayData.macroContext?.[0]?.value || 'N/A'}
-        - **Forças (Presente):** ${presentDayData.presentDayStrengths}
-        - **Fraquezas (Presente):** ${presentDayData.presentDayWeaknesses}
-        - **Forças (Backtest):** ${backtestData?.backtestStrengths || 'N/A'}
-        - **Fraquezas (Backtest):** ${backtestData?.backtestWeaknesses || 'N/A'}
+        - **Análise do Presente:** ${JSON.stringify(presentDayData)}
+        - **Análise do Backtest:** ${JSON.stringify(backtestData)}
     `;
     
     chat = ai.chats.create({
@@ -800,14 +809,16 @@ export const createChatSession = async (
     });
     return chat;
 };
+
+
 export const fetchSupervisorDirective = async (
     analysis: SelfAnalysis,
     evolutionPrompt: string
 ): Promise<{ directive: string }> => {
-    // This is a simplified mock.
-    throw new Error("fetchSupervisorDirective is not implemented yet.");
+    throw new Error("fetchSupervisorDirective is not implemented on the frontend mock.");
 };
+
+
 export const fetchRobustnessAudit = async (): Promise<AuditReport> => {
-    // This is a simplified mock.
-    throw new Error("fetchRobustnessAudit is not implemented yet.");
+    throw new Error("fetchRobustnessAudit is not implemented on the frontend mock.");
 };

@@ -63,11 +63,16 @@ export const translations = {
 
         // Performance Panel
         performancePanelDescription: 'Métricas de desempenho baseadas nos resultados reais de todos os sinais de trading que já foram concluídos.',
+        buyPerformance: 'Desempenho de Compra (Long)',
+        sellPerformance: 'Desempenho de Venda (Short)',
+        overallPerformance: 'Desempenho Geral Consolidado',
         winRate: 'Taxa de Acerto',
         profitFactor: 'Fator de Lucro',
         totalNetProfit: 'Lucro Líquido Total',
         avgRoi: 'ROI Médio',
         tradingJournal: 'Diário de Trades',
+        buyTradesJournal: 'Diário de Trades de Compra (Long)',
+        sellTradesJournal: 'Diário de Trades de Venda (Short)',
         journalDescription: 'Um registro de todas as operações concluídas, mostrando o resultado real de cada uma.',
         asset: 'Ativo',
         outcome: 'Resultado',
@@ -356,11 +361,16 @@ export const translations = {
 
         // Performance Panel
         performancePanelDescription: 'Performance metrics based on the actual results of all trading signals that have concluded.',
+        buyPerformance: 'Buy (Long) Performance',
+        sellPerformance: 'Sell (Short) Performance',
+        overallPerformance: 'Overall Consolidated Performance',
         winRate: 'Win Rate',
         profitFactor: 'Profit Factor',
         totalNetProfit: 'Total Net Profit',
         avgRoi: 'Average ROI',
         tradingJournal: 'Trading Journal',
+        buyTradesJournal: 'Buy (Long) Trades Journal',
+        sellTradesJournal: 'Sell (Short) Trades Journal',
         journalDescription: 'A log of all completed trades, showing the real-world outcome of each signal.',
         asset: 'Asset',
         outcome: 'Outcome',

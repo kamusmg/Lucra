@@ -1,6 +1,7 @@
 
 
 
+
 export interface BacktestSignal {
   assetName: string;
   signalType: 'COMPRA' | 'VENDA';
@@ -362,6 +363,7 @@ export interface CompletedTrade {
   actualRoiPercentage: number;
   status: 'Closed' | 'Error';
   feesUsd?: number; // Total simulated fees for the trade
+  closeReason?: 'Target' | 'Stop' | 'Expired'; // Reason for trade closure
 }
 
 export interface PerformanceMetrics {

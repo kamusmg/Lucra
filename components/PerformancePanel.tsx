@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -51,7 +52,17 @@ const MetricCard: React.FC<{ title: string; value: string | number; icon: React.
     </div>
 );
 
-const TradingJournalTable: React.FC<{ trades: CompletedTrade[]; t: any }> = ({ trades, t }) => {
+const MetricsDisplay: React.FC<{ metrics: PerformanceMetrics, t: any }> = ({ metrics, t }) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard title={t.winRate} value={formatPercentage(metrics.winRate)} icon={<TrendingUpIcon />} colorClass={metrics.winRate >= 50 ? 'text-success' : 'text-danger'} />
+        <MetricCard title={t.profitFactor} value={metrics.profitFactor?.toFixed(2) ?? '∞'} icon={<TrophyIcon />} colorClass={metrics.profitFactor && metrics.profitFactor >= 1 ? 'text-success' : 'text-danger'} />
+        <MetricCard title={t.totalNetProfit} value={formatCurrency(metrics.totalNetProfit)} icon={<DollarSignIcon />} colorClass={metrics.totalNetProfit >= 0 ? 'text-success' : 'text-danger'} />
+        <MetricCard title={t.avgRoi} value={formatPercentage(metrics.averageRoi)} icon={<PercentIcon />} colorClass={metrics.averageRoi >= 0 ? 'text-success' : 'text-danger'} />
+    </div>
+);
+
+
+const TradingJournalTable: React.FC<{ trades: CompletedTrade[]; title: string; t: any }> = ({ trades, title, t }) => {
     const outcomeConfig: { [key in CompletedTrade['outcome']]: { text: string; color: string } } = {
         Win: { text: t.win, color: 'text-success' },
         Loss: { text: t.loss, color: 'text-danger' },
@@ -59,13 +70,15 @@ const TradingJournalTable: React.FC<{ trades: CompletedTrade[]; t: any }> = ({ t
         Processing: { text: t.processing, color: 'text-blue-400' },
         Error: { text: t.error, color: 'text-gray-500' },
     };
+    
+    if (trades.length === 0) return null;
+
     return (
         <div className="mt-6">
             <h4 className="text-lg font-bold text-primary mb-2 flex items-center gap-2">
                 <JournalIcon className="h-5 w-5" />
-                <span>{t.tradingJournal}</span>
+                <span>{title}</span>
             </h4>
-            <p className="text-sm text-text-secondary mb-4">{t.journalDescription}</p>
             <div className="max-h-96 overflow-y-auto pr-2 bg-background/30 rounded-lg border border-border/50 scrollbar-thin scrollbar-thumb-border scrollbar-track-surface">
                 <table className="w-full text-sm text-left">
                     <thead className="sticky top-0 bg-surface z-10">
@@ -80,7 +93,7 @@ const TradingJournalTable: React.FC<{ trades: CompletedTrade[]; t: any }> = ({ t
                     <tbody>
                         {trades.map(trade => (
                             <tr key={trade.id} className="border-t border-border/50 hover:bg-border/50">
-                                <td className="p-3 font-semibold text-white">{trade.assetName} <span className={`text-xs ${trade.signalType === 'COMPRA' ? 'text-success' : 'text-danger'}`}>({trade.signalType})</span></td>
+                                <td className="p-3 font-semibold text-white">{trade.assetName}</td>
                                 <td className={`p-3 font-bold ${outcomeConfig[trade.outcome].color}`}>{outcomeConfig[trade.outcome].text}</td>
                                 <td className="p-3 font-mono text-right text-text-secondary">{formatCurrency(trade.feesUsd)}</td>
                                 <td className={`p-3 font-semibold text-right ${trade.actualProfitUsd >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(trade.actualProfitUsd)}</td>
@@ -100,7 +113,14 @@ const PerformancePanel: React.FC = () => {
     const { language } = useLanguage();
     const t = translations[language];
 
-    const metrics = useMemo(() => calculateMetrics(completedTrades), [completedTrades]);
+    const { buyTrades, sellTrades } = useMemo(() => ({
+        buyTrades: completedTrades.filter(t => t.signalType === 'COMPRA'),
+        sellTrades: completedTrades.filter(t => t.signalType === 'VENDA'),
+    }), [completedTrades]);
+
+    const buyMetrics = useMemo(() => calculateMetrics(buyTrades), [buyTrades]);
+    const sellMetrics = useMemo(() => calculateMetrics(sellTrades), [sellTrades]);
+    const overallMetrics = useMemo(() => calculateMetrics(completedTrades), [completedTrades]);
     
     return (
         <div className="relative">
@@ -116,16 +136,38 @@ const PerformancePanel: React.FC = () => {
                     <p className="text-lg text-text-secondary">{t.noTradesYet}</p>
                 </div>
             ) : (
-                 <div>
-                    <p className="text-sm text-text-secondary mb-6">{t.performancePanelDescription}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <MetricCard title={t.winRate} value={formatPercentage(metrics.winRate)} icon={<TrendingUpIcon />} colorClass={metrics.winRate >= 50 ? 'text-success' : 'text-danger'} />
-                        <MetricCard title={t.profitFactor} value={metrics.profitFactor?.toFixed(2) ?? '∞'} icon={<TrophyIcon />} colorClass={metrics.profitFactor && metrics.profitFactor >= 1 ? 'text-success' : 'text-danger'} />
-                        <MetricCard title={t.totalNetProfit} value={formatCurrency(metrics.totalNetProfit)} icon={<DollarSignIcon />} colorClass={metrics.totalNetProfit >= 0 ? 'text-success' : 'text-danger'} />
-                        <MetricCard title={t.avgRoi} value={formatPercentage(metrics.averageRoi)} icon={<PercentIcon />} colorClass={metrics.averageRoi >= 0 ? 'text-success' : 'text-danger'} />
+                 <div className="space-y-10">
+                    {/* Buy Performance */}
+                    {buyTrades.length > 0 && (
+                        <div className="bg-green-900/10 border border-green-500/20 rounded-lg p-6">
+                            <h3 className="text-xl font-bold text-green-300 mb-4">{t.buyPerformance}</h3>
+                            <MetricsDisplay metrics={buyMetrics} t={t} />
+                        </div>
+                    )}
+
+                    {/* Sell Performance */}
+                    {sellTrades.length > 0 && (
+                        <div className="bg-red-900/10 border border-red-500/20 rounded-lg p-6">
+                            <h3 className="text-xl font-bold text-red-300 mb-4">{t.sellPerformance}</h3>
+                             <MetricsDisplay metrics={sellMetrics} t={t} />
+                        </div>
+                    )}
+                    
+                    {/* Overall Performance */}
+                    <div className="bg-surface/50 border border-border/50 rounded-lg p-6">
+                        <h3 className="text-xl font-bold text-primary mb-4">{t.overallPerformance}</h3>
+                         <MetricsDisplay metrics={overallMetrics} t={t} />
                     </div>
-        
-                    <TradingJournalTable trades={completedTrades} t={t} />
+
+                    {/* Trading Journals */}
+                    <div>
+                         <h3 className="text-2xl font-bold text-text mb-2 text-center">{t.tradingJournal}</h3>
+                         <p className="text-sm text-text-secondary mb-6 text-center">{t.journalDescription}</p>
+                         <div className="space-y-8">
+                             <TradingJournalTable trades={buyTrades} title={t.buyTradesJournal} t={t} />
+                             <TradingJournalTable trades={sellTrades} title={t.sellTradesJournal} t={t} />
+                         </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -1,6 +1,7 @@
 
 
 
+
 import React, { createContext, useState, useEffect, useCallback, useContext, ReactNode, useRef } from 'react';
 import { PresentDayAssetSignal, LivePrices, BacktestAnalysisResult, PresentDayAnalysisResult, MemeCoinSignal, CompletedTrade, SentimentAnalysis, Notification, ActiveTrade, ApiKey, OrderStatus } from '../types.ts';
 import { ApiClient } from '../services/api/client.ts';
@@ -483,11 +484,22 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                         const targetPrice = parseFloat(trade.target);
                         const stopLossPrice = parseFloat(trade.stopLoss);
                         let closed = false;
+                        let closeReason: CompletedTrade['closeReason'] = undefined;
                         
-                        if (trade.signalType === 'COMPRA' && (currentPrice >= targetPrice || currentPrice <= stopLossPrice)) {
+                        const exitTime = DateTime.fromFormat(trade.exitDatetime, 'dd/MM/yyyy HH:mm:ss');
+                        
+                        if (trade.signalType === 'COMPRA') {
+                            if (currentPrice >= targetPrice) { closed = true; closeReason = 'Target'; }
+                            else if (currentPrice <= stopLossPrice) { closed = true; closeReason = 'Stop'; }
+                        } else if (trade.signalType === 'VENDA') {
+                            if (currentPrice <= targetPrice) { closed = true; closeReason = 'Target'; }
+                            else if (currentPrice >= stopLossPrice) { closed = true; closeReason = 'Stop'; }
+                        }
+
+                        // Check for time-based expiration
+                        if (!closed && exitTime.isValid && DateTime.now() > exitTime) {
                             closed = true;
-                        } else if (trade.signalType === 'VENDA' && (currentPrice <= targetPrice || currentPrice >= stopLossPrice)) {
-                            closed = true;
+                            closeReason = 'Expired';
                         }
 
                         if (closed) {
@@ -529,6 +541,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                                 actualRoiPercentage: netRoiPercentage,
                                 status: 'Closed',
                                 feesUsd: totalFees,
+                                closeReason,
                             });
                             updatedActiveTrades.splice(i, 1);
                         }
@@ -550,7 +563,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             } catch (error) {
                 console.error("Error during live monitoring:", error);
             }
-        }, 20000); // Check every 20 seconds
+        }, 5000); // Check every 5 seconds for responsiveness
 
         return () => clearInterval(monitorInterval);
     }, [apiClient]);
