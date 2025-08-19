@@ -1,5 +1,4 @@
 
-
 import React, { useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -13,6 +12,7 @@ import TrendingUpIcon from './icons/TrendingUpIcon';
 import TrendingDownIcon from './icons/TrendingDownIcon';
 import DollarSignIcon from './icons/DollarSignIcon';
 import PercentIcon from './icons/PercentIcon';
+import TrashIcon from './icons/TrashIcon';
 
 const calculateMetrics = (trades: CompletedTrade[]): PerformanceMetrics => {
     const totalTrades = trades.length;
@@ -109,7 +109,7 @@ const TradingJournalTable: React.FC<{ trades: CompletedTrade[]; title: string; t
 
 
 const PerformancePanel: React.FC = () => {
-    const { completedTrades, isRecalculating } = useData();
+    const { completedTrades, isRecalculating, resetCompletedTrades } = useData();
     const { language } = useLanguage();
     const t = translations[language];
 
@@ -121,6 +121,12 @@ const PerformancePanel: React.FC = () => {
     const buyMetrics = useMemo(() => calculateMetrics(buyTrades), [buyTrades]);
     const sellMetrics = useMemo(() => calculateMetrics(sellTrades), [sellTrades]);
     const overallMetrics = useMemo(() => calculateMetrics(completedTrades), [completedTrades]);
+
+    const handleReset = () => {
+        if (window.confirm(t.resetPerformanceConfirm)) {
+            resetCompletedTrades();
+        }
+    };
     
     return (
         <div className="relative">
@@ -128,6 +134,19 @@ const PerformancePanel: React.FC = () => {
                 <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center rounded-lg z-20">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 </div>
+            )}
+
+            {completedTrades.length > 0 && (
+                 <div className="flex justify-end mb-4">
+                     <button
+                         onClick={handleReset}
+                         className="flex items-center gap-2 text-sm font-semibold bg-danger/20 text-danger px-3 py-1.5 rounded-lg hover:bg-danger/30 transition-colors"
+                         title={t.resetPerformanceHistory}
+                     >
+                         <TrashIcon className="h-4 w-4" />
+                         <span>{t.resetPerformanceHistory}</span>
+                     </button>
+                 </div>
             )}
             
             {completedTrades.length === 0 ? (

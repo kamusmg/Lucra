@@ -1,7 +1,4 @@
 
-
-
-
 import React, { createContext, useState, useEffect, useCallback, useContext, ReactNode, useRef } from 'react';
 import { PresentDayAssetSignal, LivePrices, BacktestAnalysisResult, PresentDayAnalysisResult, MemeCoinSignal, CompletedTrade, SentimentAnalysis, Notification, ActiveTrade, ApiKey, OrderStatus } from '../types.ts';
 import { ApiClient } from '../services/api/client.ts';
@@ -90,6 +87,8 @@ export interface IDataContext {
     removeApiKey: (id: string) => void;
     setTotalCapital: (capital: number) => void;
     setRiskPercentage: (percentage: number) => void;
+    resetCompletedTrades: () => void;
+    resetActiveTrades: () => void;
 }
 
 const DataContext = createContext<IDataContext | undefined>(undefined);
@@ -810,6 +809,19 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
         });
     }, []);
 
+    // --- New Reset Functions ---
+    const resetCompletedTrades = useCallback(() => {
+        setCompletedTrades([]);
+        localStorage.removeItem(COMPLETED_TRADES_KEY);
+    }, []);
+
+    const resetActiveTrades = useCallback(() => {
+        setActiveTrades([]);
+        setPendingSignals([]);
+        localStorage.removeItem(ACTIVE_TRADES_KEY);
+        localStorage.removeItem(PENDING_SIGNALS_KEY);
+    }, []);
+
 
     return (
         <DataContext.Provider value={{
@@ -856,6 +868,8 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             removeApiKey,
             setTotalCapital,
             setRiskPercentage,
+            resetCompletedTrades,
+            resetActiveTrades,
         }}>
             {children}
         </DataContext.Provider>

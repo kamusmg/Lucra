@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -10,6 +11,7 @@ import ClockIcon from './ClockIcon';
 import CheckCircleIcon from './icons/CheckCircleIcon';
 import CautionIcon from './CautionIcon';
 import { DateTime } from 'luxon';
+import TrashIcon from './icons/TrashIcon';
 
 const StatusIndicator: React.FC<{ status: OrderStatus; details: string; t: any }> = ({ status, details, t }) => {
     const config: { [key in OrderStatus]: { icon: React.ReactNode; color: string; label: string; tooltip: string } } = {
@@ -57,7 +59,7 @@ const StatusIndicator: React.FC<{ status: OrderStatus; details: string; t: any }
 
 
 const LivePositionsPanel: React.FC = () => {
-    const { activeTrades, pendingSignals, isRecalculating } = useData();
+    const { activeTrades, pendingSignals, isRecalculating, resetActiveTrades } = useData();
     const { language } = useLanguage();
     const t = translations[language];
 
@@ -68,6 +70,12 @@ const LivePositionsPanel: React.FC = () => {
         return dateB.toMillis() - dateA.toMillis();
     });
 
+    const handleReset = () => {
+        if (window.confirm(t.closeAllPositionsConfirm)) {
+            resetActiveTrades();
+        }
+    };
+
     return (
         <div className="relative">
              {isRecalculating && (
@@ -75,7 +83,19 @@ const LivePositionsPanel: React.FC = () => {
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 </div>
             )}
-            <p className="text-sm text-text-secondary mb-6">{t.livePositionsDescription}</p>
+            <div className="flex justify-between items-start gap-4 mb-6">
+                <p className="text-sm text-text-secondary">{t.livePositionsDescription}</p>
+                {(activeTrades.length > 0 || pendingSignals.length > 0) && (
+                    <button
+                        onClick={handleReset}
+                        className="flex-shrink-0 flex items-center gap-2 text-sm font-semibold bg-danger/20 text-danger px-3 py-1.5 rounded-lg hover:bg-danger/30 transition-colors"
+                        title={t.closeAllPositions}
+                    >
+                        <TrashIcon className="h-4 w-4" />
+                        <span>{t.closeAllPositions}</span>
+                    </button>
+                )}
+            </div>
             
             {sortedTrades.length === 0 ? (
                 <div className="text-center py-10">

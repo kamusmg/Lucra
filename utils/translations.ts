@@ -1,3 +1,4 @@
+
 export const translations = {
     pt: {
         // General
@@ -84,6 +85,9 @@ export const translations = {
         breakeven: 'Empate',
         processing: 'Processando',
         noTradesYet: 'Nenhum trade concluído ainda. Os resultados aparecerão aqui assim que as operações forem finalizadas.',
+        resetPerformanceHistory: 'Resetar Histórico',
+        resetPerformanceConfirm: 'Você tem certeza que deseja apagar permanentemente todo o histórico de trades concluídos? Esta ação não pode ser desfeita.',
+
         
         // Meme Coin Watchlist
         potential: 'Potencial',
@@ -133,6 +137,8 @@ export const translations = {
         tooltipPending: 'Aguardando simulação de execução. O sistema está verificando as chaves de API.',
         tooltipFilled: 'Ordem simulada e preenchida.',
         tooltipError: 'Falha na execução. Verifique se uma chave de API da Binance está configurada corretamente.',
+        closeAllPositions: 'Fechar Todas',
+        closeAllPositionsConfirm: 'Você tem certeza que deseja fechar todas as posições abertas e cancelar todos os sinais pendentes? Esta ação não pode ser desfeita.',
 
 
         // API Key Management (Phase 4.5, Pillar 2)
@@ -382,6 +388,8 @@ export const translations = {
         breakeven: 'Breakeven',
         processing: 'Processing',
         noTradesYet: 'No completed trades yet. Results will appear here once operations are finished.',
+        resetPerformanceHistory: 'Reset History',
+        resetPerformanceConfirm: 'Are you sure you want to permanently delete all completed trade history? This action cannot be undone.',
 
         // Meme Coin Watchlist
         potential: 'Potential',
@@ -429,6 +437,9 @@ export const translations = {
         tooltipPending: 'Awaiting execution simulation. The system is checking for API keys.',
         tooltipFilled: 'Simulated order filled.',
         tooltipError: 'Execution failed. Check if a Binance API key is configured correctly.',
+        closeAllPositions: 'Close All',
+        closeAllPositionsConfirm: 'Are you sure you want to close all open positions and cancel all pending signals? This action cannot be undone.',
+
 
         // API Key Management (Phase 4.5, Pillar 2)
         apiKeyManagementDescription: 'Add and manage your exchange API keys to enable trade execution. Your keys are stored locally in your browser and are never sent to our servers.',
