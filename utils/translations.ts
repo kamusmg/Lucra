@@ -1,4 +1,3 @@
-
 export const translations = {
     pt: {
         // General

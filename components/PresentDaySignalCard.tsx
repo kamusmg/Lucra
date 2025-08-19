@@ -377,6 +377,24 @@ export const SignalBlock: React.FC<{
                         
                     </div>
                     <div className="text-red-400 font-semibold text-right">{signal.stopLoss}</div>
+
+                    {(signal.riskPerTrade !== undefined && signal.recommendedPositionSize !== undefined) && (
+                        <>
+                            <div className="text-text-secondary col-span-2 my-1 border-t border-border/30"></div>
+
+                            <div className="flex items-center text-text-secondary">
+                                <span>{t.riskValue}</span>
+                                <InfoTooltip text={t.tooltipRiskValue} />
+                            </div>
+                            <div className="text-white font-semibold text-right">{formatCurrency(signal.riskPerTrade)}</div>
+
+                            <div className="flex items-center text-text-secondary">
+                                <span>{t.positionSize}</span>
+                                <InfoTooltip text={t.tooltipPositionSize} />
+                            </div>
+                            <div className="text-white font-semibold text-right">{formatCurrency(signal.recommendedPositionSize)}</div>
+                        </>
+                    )}
                     
                     <div className="text-text-secondary col-span-2 my-1 border-t border-border/30"></div>
 
