@@ -9,9 +9,9 @@ import ActivityIcon from './icons/ActivityIcon';
 import InfoTooltip from './InfoTooltip';
 import ClockIcon from './ClockIcon';
 import CheckCircleIcon from './icons/CheckCircleIcon';
-import CautionIcon from './CautionIcon';
+import CautionIcon from './CautionIcon.tsx';
 import { DateTime } from 'luxon';
-import TrashIcon from './icons/TrashIcon';
+import TrashIcon from './icons/TrashIcon.tsx';
 
 const StatusIndicator: React.FC<{ status: OrderStatus; details: string; t: any }> = ({ status, details, t }) => {
     const config: { [key in OrderStatus]: { icon: React.ReactNode; color: string; label: string; tooltip: string } } = {
@@ -125,16 +125,10 @@ const LivePositionsPanel: React.FC = () => {
                                 <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">{t.target}</th>
                                 <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">{t.stopLoss}</th>
                                 <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">
-                                    <div className="flex items-center justify-end">
-                                        <span>{t.pnlNet} (USD)</span>
-                                        <InfoTooltip text={t.tooltipPnlNet} />
-                                    </div>
+                                    {t.pnlNet} (USD)
                                 </th>
                                 <th className="px-2 py-3 font-semibold text-text-secondary uppercase text-right">
-                                    <div className="flex items-center justify-end">
-                                        <span>{t.pnlNet} (%)</span>
-                                        <InfoTooltip text={t.tooltipPnlNet} />
-                                    </div>
+                                    {t.pnlNet} (%)
                                 </th>
                             </tr>
                         </thead>

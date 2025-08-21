@@ -205,7 +205,8 @@ export const SignalBlock: React.FC<{
     rerollError?: string | null;
     showProminentProfit?: boolean;
     isTacticalSearch?: boolean;
-}> = ({signal, type, index, onReroll, isRerolling = false, rerollError = null, showProminentProfit = false, isTacticalSearch = false}) => {
+    showTooltips?: boolean;
+}> = ({signal, type, index, onReroll, isRerolling = false, rerollError = null, showProminentProfit = false, isTacticalSearch = false, showTooltips = true}) => {
     const { language } = useLanguage();
     const t = translations[language];
     
@@ -346,13 +347,13 @@ export const SignalBlock: React.FC<{
                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                     <div className="flex items-center text-text-secondary">
                       <span>{t.entryPrice}</span>
-                      
+                      {showTooltips && <InfoTooltip text={t.tooltipEntryPrice} />}
                     </div>
                     <div className="text-white font-semibold text-right">{signal.entryRange}</div>
                     
                     <div className="flex items-center text-text-secondary">
                         <span>{t.probability}</span>
-                        
+                        {showTooltips && <InfoTooltip text={t.tooltipProbability} />}
                     </div>
                     <VisualIndicator percentage={probabilityValue} />
                     
@@ -360,7 +361,7 @@ export const SignalBlock: React.FC<{
                         <>
                             <div className="flex items-center text-text-secondary">
                                 <span>{t.ivl}</span>
-                                
+                                {showTooltips && <InfoTooltip text={t.tooltipIvl} />}
                             </div>
                             <VisualIndicator percentage={signal.ivlPercentage} />
                         </>
@@ -368,13 +369,13 @@ export const SignalBlock: React.FC<{
 
                     <div className="flex items-center text-text-secondary">
                         <span>{t.target}</span>
-                        
+                        {showTooltips && <InfoTooltip text={t.tooltipTarget} />}
                     </div>
                     <div className="text-green-400 font-semibold text-right">{signal.target}</div>
 
                     <div className="flex items-center text-text-secondary">
                         <span>{t.stopLoss}</span>
-                        
+                        {showTooltips && <InfoTooltip text={t.tooltipStopLoss} />}
                     </div>
                     <div className="text-red-400 font-semibold text-right">{signal.stopLoss}</div>
 
@@ -384,13 +385,13 @@ export const SignalBlock: React.FC<{
 
                             <div className="flex items-center text-text-secondary">
                                 <span>{t.riskValue}</span>
-                                <InfoTooltip text={t.tooltipRiskValue} />
+                                {showTooltips && <InfoTooltip text={t.tooltipRiskValue} />}
                             </div>
                             <div className="text-white font-semibold text-right">{formatCurrency(signal.riskPerTrade)}</div>
 
                             <div className="flex items-center text-text-secondary">
                                 <span>{t.positionSize}</span>
-                                <InfoTooltip text={t.tooltipPositionSize} />
+                                {showTooltips && <InfoTooltip text={t.tooltipPositionSize} />}
                             </div>
                             <div className="text-white font-semibold text-right">{formatCurrency(signal.recommendedPositionSize)}</div>
                         </>
@@ -416,7 +417,7 @@ export const SignalBlock: React.FC<{
                  <div className="mt-3 pt-3 border-t border-border/30 text-center bg-background/30 rounded-md p-2">
                     <div className="text-xs text-text-secondary mb-1 flex items-center justify-center">
                         {profitLabel} ({t.baseInvestment})
-                        
+                        {showTooltips && <InfoTooltip text={t.tooltipRoi} />}
                     </div>
                     <div className={`${showProminentProfit ? 'text-4xl' : 'text-2xl'} font-bold ${profitColor}`}>{formatCurrency(signal.profitProjectionUsd)}</div>
                     <div className={`text-sm font-semibold ${profitColor}`}>({formatPercentage(signal.roiProjectionPercentage)})</div>

@@ -3,9 +3,9 @@ import React, { useState, useCallback } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { translations } from '../utils/translations';
-import { SignalBlock } from './PresentDaySignalCard';
-import SignalBlockSkeleton from './skeletons/SignalBlockSkeleton';
-import XIcon from './icons/XIcon';
+import { SignalBlock } from './PresentDaySignalCard.tsx';
+import SignalBlockSkeleton from './skeletons/SignalBlockSkeleton.tsx';
+import XIcon from './icons/XIcon.tsx';
 
 const Watchlist: React.FC = () => {
     const { 
@@ -103,6 +103,7 @@ const Watchlist: React.FC = () => {
                          <SignalBlock 
                             signal={watchlistAnalysisResult} 
                             showProminentProfit={true} 
+                            showTooltips={false}
                         />
                     )}
                     {!watchlistAnalysisResult && !isWatchlistLoading && !watchlistError && (
