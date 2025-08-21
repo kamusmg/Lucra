@@ -1,12 +1,13 @@
-import express from 'express';
-import { Express, Request, Response, NextFunction, ErrorRequestHandler } from 'express';
+
+
+import express, { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import * as analysisController from './api/analysisController';
 
 dotenv.config();
 
-const app: Express = express();
+const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Configuração de CORS mais explícita para permitir

@@ -265,8 +265,8 @@ const presentDayAnalysisSchema = {
     type: Type.OBJECT,
     properties: {
         macroContext: { type: Type.ARRAY, description: "CRÍTICO: Um array com o estado atual dos seus modelos de análise macro. DEVE começar com o 'Regime de Mercado Atual' e incluir de 5 a 7 outros indicadores. Se necessário, use métricas técnicas (RSI do BTC) para atingir o total.", items: macroIndicatorSchema },
-        presentDayBuySignals: { type: Type.ARRAY, description: "Array com os sinais de 'COMPRA' para o dia, alocados dinamicamente com base no regime de mercado.", items: presentDaySignalSchema },
-        presentDaySellSignals: { type: Type.ARRAY, description: "Array com os sinais de 'VENDA' (short) para o dia, alocados dinamicamente com base no regime de mercado.", items: presentDaySignalSchema },
+        presentDayBuySignals: { type: Type.ARRAY, description: "Array de sinais de 'COMPRA' para o dia. O número de sinais é alocado dinamicamente com base no regime de mercado.", items: presentDaySignalSchema },
+        presentDaySellSignals: { type: Type.ARRAY, description: "Array de sinais de 'VENDA' (short) para o dia. O número de sinais é alocado dinamicamente com base no regime de mercado.", items: presentDaySignalSchema },
         presentDayStrengths: { type: Type.STRING, description: "Justificativa curta dos PONTOS FORTES das operações recomendadas para o PRESENTE." },
         presentDayWeaknesses: { type: Type.STRING, description: "Justificativa curta das FRAQUEZAS ou RISCOS das operações recomendadas para o PRESENTE." },
     },

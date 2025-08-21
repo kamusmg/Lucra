@@ -453,10 +453,9 @@ const SignalGrid: React.FC<{
     t: any;
 }> = ({ signals, side, onReroll, onAddSignal, isRerolling, isAddingSignal, rerollErrors, t }) => {
     
-    // The grid aims for a minimum of 4 slots for UI consistency.
-    // If more signals are provided (e.g., in a strong trend), it will dynamically render all of them.
-    const MINIMUM_VISIBLE_SLOTS = 4;
-    const emptySlotsCount = Math.max(0, MINIMUM_VISIBLE_SLOTS - signals.length);
+    // The grid dynamically renders all signals and fills remaining space up to a minimum of 4 slots.
+    const MINIMUM_CARD_SLOTS = 4;
+    const emptySlotsCount = Math.max(0, MINIMUM_CARD_SLOTS - signals.length);
 
     return (
         <>
