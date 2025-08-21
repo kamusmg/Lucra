@@ -1,11 +1,12 @@
 import express from 'express';
+import { Express, Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import * as analysisController from './api/analysisController';
 
 dotenv.config();
 
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT || 3001;
 
 // Configuração de CORS mais explícita para permitir
@@ -31,7 +32,7 @@ app.post('/api/analysis/sentiment', analysisController.getSentimentAnalysis);
 
 
 // Basic Error Handling Middleware
-const errorHandler: express.ErrorRequestHandler = (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+const errorHandler: ErrorRequestHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
   res.status(500).json({ message: 'An internal server error occurred', error: errorMessage });

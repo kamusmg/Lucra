@@ -106,6 +106,19 @@ const riskManagementDirective = `
         -   O RR Mínimo padrão é **1.5**, mas este valor é sobrescrito pela Diretiva de Risco Adaptativa.
 `;
 
+const entryRangeRealismDirective = `
+    **DIRETIVA DE REALISMO NA FAIXA DE ENTRADA v1.0 - REGRA OBRIGATÓRIA:**
+    Feedback do Supervisor: Suas faixas de entrada anteriores ('entryRange') são tecnicamente perfeitas, mas irrealisticamente apertadas. Elas estão fazendo com que as ordens não sejam executadas por margens mínimas (slippage, taxas).
+
+    **AÇÃO CORRETIVA OBRIGATÓRIA:**
+    Para CADA SINAL (COMPRA ou VENDA), você DEVE criar uma 'entryRange' mais ampla e prática.
+    1.  **Base de Cálculo:** Use um ponto de referência técnico recente e válido (ex: a mínima das últimas 24h para uma COMPRA, ou a máxima para uma VENDA) como ponto de partida.
+    2.  **Adicionar "Gordura":** A partir do seu ponto de entrada "ideal", adicione uma margem de segurança para aumentar a probabilidade de execução.
+        -   **Para BTC/ETH (Baixa Volatilidade Relativa):** Crie uma faixa com uma amplitude de pelo menos **0.5% a 0.7%**. Exemplo: Se o ponto ideal for $100, a faixa poderia ser "$99.50 - $100.20".
+        -   **Para Altcoins (Alta Volatilidade):** Crie uma faixa com uma amplitude de pelo menos **1.0% a 1.5%**. A volatilidade maior exige uma banda mais larga.
+    3.  **Justificativa:** Sua lógica deve ser "melhor uma boa entrada executada do que uma entrada perfeita perdida". As faixas devem refletir isso.
+`;
+
 const dceDirective = `
     **DIRETIVA DE CHECKLIST DE ENTRADA (DCE) - REGRA PERMANENTE:**
     Para CADA SINAL DE OPORTUNIDADE gerado (compra ou venda), você DEVE executar um checklist técnico e incluir o resultado no campo 'checklistResult'.
@@ -250,8 +263,8 @@ const presentDayAnalysisSchema = {
     type: Type.OBJECT,
     properties: {
         macroContext: { type: Type.ARRAY, description: "CRÍTICO: Um array com o estado atual dos seus modelos de análise macro. DEVE começar com o 'Regime de Mercado Atual' e incluir de 5 a 7 outros indicadores. Se necessário, use métricas técnicas (RSI do BTC) para atingir o total.", items: macroIndicatorSchema },
-        presentDayBuySignals: { type: Type.ARRAY, description: "Array com até 4 sinais de 'COMPRA' para o horizonte de 24 Horas.", items: presentDaySignalSchema },
-        presentDaySellSignals: { type: Type.ARRAY, description: "Array com até 4 sinais de 'VENDA' (short) para o horizonte de 24 Horas.", items: presentDaySignalSchema },
+        presentDayBuySignals: { type: Type.ARRAY, description: "Array com os sinais de 'COMPRA' para o dia, alocados dinamicamente com base no regime de mercado.", items: presentDaySignalSchema },
+        presentDaySellSignals: { type: Type.ARRAY, description: "Array com os sinais de 'VENDA' (short) para o dia, alocados dinamicamente com base no regime de mercado.", items: presentDaySignalSchema },
         presentDayStrengths: { type: Type.STRING, description: "Justificativa curta dos PONTOS FORTES das operações recomendadas para o PRESENTE." },
         presentDayWeaknesses: { type: Type.STRING, description: "Justificativa curta das FRAQUEZAS ou RISCOS das operações recomendadas para o PRESENTE." },
     },
@@ -336,21 +349,25 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
         ${strategyPlaybooksDirective}
         - Com base no regime definido, você DEVE aplicar o playbook correspondente para gerar TODOS os sinais.
 
-        **PASSO 4: GERAR SINAIS COM ANÁLISE COMPLETA E VALIDAÇÃO DE RISCO**
+        **PASSO 4: GERAR SINAIS COM ANÁLISE COMPLETA E ALOCAÇÃO ADAPTATIVA**
         ${riskManagementDirective} 
+        ${entryRangeRealismDirective}
         ${dceDirective}
         ${fundamentalAnalysisDirective}
         ${structuredDriversDirective}
-        - **REGRAS:** Execute a análise completa para os 8 sinais de oportunidade (4 de compra, 4 de venda), garantindo que CADA SINAL respeite as regras de Risco Adaptativo do Passo 2 e preencha o campo 'technicalDrivers'. O universo de análise é UNIFICADO e pode incluir tanto ativos principais (BTC, ETH) quanto altcoins.
+        - **DIRETIVA DE ALOCAÇÃO DE SINAIS ADAPTATIVA:** Sua tarefa mudou. Você não precisa mais gerar 4 sinais de compra e 4 de venda. Em vez disso, você tem um total de 8 'slots' de sinais para o dia. Você DEVE alocar esses slots de forma inteligente, com base no Regime de Mercado que identificou:
+          - **Se RALI DE ALTA:** Aloque de 6 a 7 slots para COMPRA (Long). Aloque 1 ou 2 slots para VENDA (Short), mas somente se encontrar setups contra-tendência de altíssima qualidade (ex: uma clara exaustão em uma resistência forte). Se não encontrar nenhum short bom, é aceitável alocar todos os 8 slots para COMPRA.
+          - **Se TENDÊNCIA DE BAIXA:** O inverso. Aloque de 6 a 7 slots para VENDA (Short) e 1 ou 2 para COMPRA (Long) de alta convicção.
+          - **Se MERCADO LATERAL:** Aloque os slots de forma equilibrada (ex: 4/4 ou 3/3), focando em setups de reversão à média nos extremos do range.
+          - **Se INCERTEZA VOLÁTIL:** Gere 8 sinais NEUTROS para preservar o capital.
+        - **REGRAS GERAIS:** CADA SINAL gerado DEVE respeitar as regras de Risco Adaptativo do Passo 2, preencher o campo 'technicalDrivers' e passar por todas as diretivas de qualidade. O universo de análise é UNIFICADO e pode incluir tanto ativos principais (BTC, ETH) quanto altcoins.
 
         **PASSO 4.5: CALCULAR DIMENSIONAMENTO DE POSIÇÃO**
         ${dynamicRiskPrompt}
         - Execute o cálculo de dimensionamento para cada sinal gerado.
 
         **PASSO 5: IDENTIFICAR O SINAL DE ELITE**
-        - Após gerar todos os sinais de um universo que INCLUI ativos principais e altcoins, sua tarefa mais crítica é comparar TODAS as oportunidades geradas. Identifique a ÚNICA oportunidade que oferece a melhor confluência de fatores e o alinhamento mais claro com o regime de mercado. Defina o campo isTopSignal dessa oportunidade como true. Todas as outras, sem exceção, devem ter isTopSignal: false.
-
-        **DIRETIVA DE CONSTRUÇÃO DE PORTFÓLIO DE SINAIS:** Ao gerar a lista final de 4 sinais de COMPRA e 4 de VENDA, você deve garantir diversidade. A composição deve ser a seguinte: No mínimo 2 dos 4 slots de cada lado (COMPRA/VENDA) devem ser alocados para ativos fora do top 10 de capitalização de mercado (exclua BTC, ETH, SOL, BNB, XRP, ADA, etc. desses 2 slots). Os outros 2 slots podem ser preenchidos com os melhores setups encontrados, independentemente do ativo. O 'SINAL DE ELITE' ainda deve ser o melhor sinal geral, não importa a categoria.
+        - Após gerar todos os sinais, sua tarefa mais crítica é comparar TODAS as oportunidades geradas. Identifique a ÚNICA oportunidade que oferece a melhor confluência de fatores e o alinhamento mais claro com o regime de mercado. Defina o campo isTopSignal dessa oportunidade como true. Todas as outras, sem exceção, devem ter isTopSignal: false.
 
         // --- DIRETIVAS DE EXECUÇÃO E CONTEXTO ---
         **DIRETIVA CRÍTICA DE OPERAÇÃO EM TEMPO REAL (REGRA INVIOLÁVEL E PRIORITÁRIA)**
@@ -362,7 +379,7 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
 
         **PROCESSO FINAL:**
         1. **Avaliação Macro:** Execute o Passo 1 e gere o 'macroContext' (mínimo 6 indicadores).
-        2. **Geração de Sinais:** Execute os Passos 2, 3, 4, 4.5 e 5 para gerar os sinais de 24 Horas.
+        2. **Geração de Sinais:** Execute os Passos 2, 3, 4, 4.5 e 5 para gerar os sinais.
         3. **Análise de Risco:** Gere 'presentDayStrengths' e 'presentDayWeaknesses'.
 
         **Formato:** Sua resposta DEVE ser um único objeto JSON que obedece estritamente ao schema fornecido.
