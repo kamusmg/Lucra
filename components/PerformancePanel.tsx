@@ -1,6 +1,4 @@
 
-
-
 import React, { useMemo, useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
