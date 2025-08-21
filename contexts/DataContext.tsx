@@ -1,5 +1,6 @@
 
 
+
 import React, { createContext, useState, useEffect, useCallback, useContext, ReactNode, useRef } from 'react';
 import { PresentDayAssetSignal, LivePrices, BacktestAnalysisResult, PresentDayAnalysisResult, MemeCoinSignal, CompletedTrade, SentimentAnalysis, Notification, ActiveTrade, ApiKey, OrderStatus, PerformanceMetrics } from '../types.ts';
 import { ApiClient } from '../services/api/client.ts';
@@ -168,6 +169,8 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
     
     const pendingSignalsRef = useRef(pendingSignals);
     pendingSignalsRef.current = pendingSignals;
+    const presentDayDataRef = useRef(presentDayData);
+    presentDayDataRef.current = presentDayData;
 
     useEffect(() => {
         const savedHistory = localStorage.getItem(SIGNAL_HISTORY_KEY);
@@ -398,6 +401,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                 
                 const stillPendingSignals: PresentDayAssetSignal[] = [];
                 const newActiveTrades: ActiveTrade[] = [];
+                const currentPresentDayData = presentDayDataRef.current;
 
                 // 2. Check Triggers
                 for (const signal of freshSignals) {
@@ -412,6 +416,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                             // TRIGGER! Create ActiveTrade
                             const slippage = (Math.random() * 2 - 1) * (MAX_SLIPPAGE_PERCENT / 100);
                             const finalEntryPrice = currentPrice * (1 + slippage);
+                            const marketRegime = currentPresentDayData?.macroContext?.find(ind => ind.name.toLowerCase().includes('regime'))?.value || 'Indefinido';
                             
                             newActiveTrades.push({
                                 ...signal,
@@ -425,6 +430,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                                 orderStatus: 'Pending',
                                 executionDetails: t.statusPending,
                                 isStopAdjusted: false, // Initialize trailing stop flag
+                                marketRegimeAtEntry: marketRegime, // Capture context
                             });
                         } else {
                             stillPendingSignals.push(signal);
@@ -532,7 +538,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                         const targetPrice = parseFloat(trade.target);
                         const stopLossPrice = parseFloat(trade.stopLoss);
                         let closed = false;
-                        let closeReason: CompletedTrade['closeReason'] = undefined;
+                        let closeReason: 'Target' | 'Stop' | 'Expired' | undefined = undefined;
                         
                         const exitTime = DateTime.fromFormat(trade.exitDatetime, 'dd/MM/yyyy HH:mm:ss');
                         
@@ -552,6 +558,13 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
 
                         if (closed) {
                             tradesClosed = true;
+                            
+                            const closingReasonMap: { [key: string]: CompletedTrade['closingReason'] } = {
+                                'Target': 'target_hit',
+                                'Stop': 'stop_loss_hit',
+                                'Expired': 'expired'
+                            };
+
                             // Apply exit slippage
                             const exitSlippage = (Math.random() * 2 - 1) * (MAX_SLIPPAGE_PERCENT / 100);
                             const adjustedExitPrice = currentPrice * (1 - exitSlippage); // Slippage against you
@@ -589,7 +602,9 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                                 actualRoiPercentage: netRoiPercentage,
                                 status: 'Closed',
                                 feesUsd: totalFees,
-                                closeReason,
+                                closingReason: closingReasonMap[closeReason || 'Expired'],
+                                marketRegimeAtEntry: trade.marketRegimeAtEntry,
+                                technicalDrivers: trade.technicalDrivers,
                             });
                             updatedActiveTrades.splice(i, 1);
                         }

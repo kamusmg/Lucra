@@ -1,6 +1,4 @@
 
-
-
 export interface BacktestSignal {
   assetName: string;
   signalType: 'COMPRA' | 'VENDA';
@@ -58,7 +56,7 @@ export interface PresentDayAssetSignal {
   reasons?: string[];
   entryWindow?: string;
   exitWindow?: string;
-  
+
   // --- NOVOS CAMPOS INSPIRADOS NA TOKEN METRICS ---
   grade: 'A' | 'B' | 'C' | 'D' | 'F'; // Nota geral do ativo
   fundamentalAnalysis: {
@@ -92,7 +90,7 @@ export interface PresentDayAssetSignal {
       investmentPerLevel?: string;
     }
   };
-
+  
   // --- NOVA ABORDAGEM OTIMIZADA ---
   isTopSignal: boolean; // Será 'true' para a melhor oportunidade do dia, 'false' para as outras.
 
@@ -361,7 +359,10 @@ export interface CompletedTrade {
   actualProfitUsd: number;
   actualRoiPercentage: number;
   status: 'Closed' | 'Error';
-  feesUsd?: number;
+  feesUsd?: number; // Total simulated fees for the trade
+  closingReason: 'target_hit' | 'stop_loss_hit' | 'expired' | 'manual'; // The reason for trade closure
+  marketRegimeAtEntry: string;
+  technicalDrivers: { [key: string]: string | boolean | number };
 }
 
 export interface PerformanceMetrics {
@@ -389,6 +390,16 @@ export interface SentimentAnalysis {
   intelligenceBriefing: string;
 }
 
+// --- New types for Notification System (Phase 4) ---
+export interface Notification {
+  id: string; // Unique ID, e.g., `price_proximity_${assetName}_${timestamp}`
+  type: 'price_proximity' | 'new_top_signal' | 'positions_opened';
+  message: string;
+  timestamp: string; // ISO string
+  read: boolean;
+  assetName?: string; // Optional asset context
+}
+
 // --- New types for Paper Trading (Phase 4.5) ---
 export type OrderStatus = 'Pending' | 'Filled' | 'Error';
 
@@ -403,4 +414,13 @@ export interface ActiveTrade extends Omit<PresentDayAssetSignal, 'signalType'> {
   orderStatus: OrderStatus;
   executionDetails: string;
   isStopAdjusted?: boolean;
+  marketRegimeAtEntry: string;
+}
+
+// --- New types for API Key Management (Phase 4.5, Pillar 2) ---
+export interface ApiKey {
+  id: string; // e.g., timestamp
+  exchange: 'Binance'; // For now, only Binance
+  apiKey: string;
+  secretKey: string; // This will be stored but never displayed
 }

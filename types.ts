@@ -2,6 +2,7 @@
 
 
 
+
 export interface BacktestSignal {
   assetName: string;
   signalType: 'COMPRA' | 'VENDA';
@@ -363,7 +364,9 @@ export interface CompletedTrade {
   actualRoiPercentage: number;
   status: 'Closed' | 'Error';
   feesUsd?: number; // Total simulated fees for the trade
-  closeReason?: 'Target' | 'Stop' | 'Expired'; // Reason for trade closure
+  closingReason: 'target_hit' | 'stop_loss_hit' | 'expired' | 'manual'; // The reason for trade closure
+  marketRegimeAtEntry: string;
+  technicalDrivers: { [key: string]: string | boolean | number };
 }
 
 export interface PerformanceMetrics {
@@ -415,6 +418,7 @@ export interface ActiveTrade extends Omit<PresentDayAssetSignal, 'signalType'> {
   orderStatus: OrderStatus;
   executionDetails: string;
   isStopAdjusted?: boolean;
+  marketRegimeAtEntry: string;
 }
 
 // --- New types for API Key Management (Phase 4.5, Pillar 2) ---

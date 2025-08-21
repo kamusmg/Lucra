@@ -1,5 +1,7 @@
 
-import React, { useMemo } from 'react';
+
+
+import React, { useMemo, useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { translations } from '../utils/translations';
@@ -13,6 +15,8 @@ import TrendingDownIcon from './icons/TrendingDownIcon';
 import DollarSignIcon from './icons/DollarSignIcon';
 import PercentIcon from './icons/PercentIcon';
 import TrashIcon from './icons/TrashIcon';
+import ChevronDownIcon from './ChevronDownIcon';
+
 
 const calculateMetrics = (trades: CompletedTrade[]): PerformanceMetrics => {
     const totalTrades = trades.length;
@@ -61,8 +65,15 @@ const MetricsDisplay: React.FC<{ metrics: PerformanceMetrics, t: any }> = ({ met
     </div>
 );
 
+const formatDriverValue = (value: any) => {
+    if (typeof value === 'boolean') return value ? '✅' : '❌';
+    if (typeof value === 'number') return value.toFixed(2);
+    return String(value);
+};
 
-const TradingJournalTable: React.FC<{ trades: CompletedTrade[]; title: string; t: any }> = ({ trades, title, t }) => {
+const TradeJournalRow: React.FC<{ trade: CompletedTrade; t: any }> = ({ trade, t }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
     const outcomeConfig: { [key in CompletedTrade['outcome']]: { text: string; color: string } } = {
         Win: { text: t.win, color: 'text-success' },
         Loss: { text: t.loss, color: 'text-danger' },
@@ -70,7 +81,64 @@ const TradingJournalTable: React.FC<{ trades: CompletedTrade[]; title: string; t
         Processing: { text: t.processing, color: 'text-blue-400' },
         Error: { text: t.error, color: 'text-gray-500' },
     };
-    
+
+    const reasonConfig: { [key in CompletedTrade['closingReason']]: { text: string; color: string } } = {
+        target_hit: { text: 'Alvo Atingido', color: 'text-success' },
+        stop_loss_hit: { text: 'Stop Atingido', color: 'text-danger' },
+        expired: { text: 'Expirado', color: 'text-yellow-400' },
+        manual: { text: 'Manual', color: 'text-blue-400' },
+    };
+
+    const currentReason = reasonConfig[trade.closingReason] || { text: trade.closingReason, color: 'text-text-secondary' };
+
+    return (
+        <>
+            <tr className="border-t border-border/50 hover:bg-border/50">
+                <td className="p-3 font-semibold text-white">{trade.assetName}</td>
+                <td className={`p-3 font-bold ${outcomeConfig[trade.outcome].color}`}>{outcomeConfig[trade.outcome].text}</td>
+                <td className={`p-3 font-semibold ${currentReason.color}`}>{currentReason.text}</td>
+                <td className="p-3 font-mono text-right text-text-secondary">{formatCurrency(trade.feesUsd)}</td>
+                <td className={`p-3 font-semibold text-right ${trade.actualProfitUsd >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(trade.actualProfitUsd)}</td>
+                <td className={`p-3 font-semibold text-right ${trade.actualRoiPercentage >= 0 ? 'text-success' : 'text-danger'}`}>{formatPercentage(trade.actualRoiPercentage)}</td>
+                <td className="p-3 text-center">
+                    <button onClick={() => setIsExpanded(!isExpanded)} className="p-1 text-text-secondary hover:text-primary">
+                        <ChevronDownIcon className={`h-5 w-5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                </td>
+            </tr>
+            {isExpanded && (
+                <tr className="bg-background/50">
+                    <td colSpan={7} className="p-4 border-t-2 border-primary/20">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h5 className="font-bold text-sm text-primary uppercase tracking-wider mb-2">Contexto de Entrada</h5>
+                                <div className="text-xs space-y-1">
+                                    <p><span className="text-text-secondary">Regime de Mercado:</span> <span className="font-semibold text-white">{trade.marketRegimeAtEntry}</span></p>
+                                    <p><span className="text-text-secondary">Data de Entrada:</span> <span className="font-mono text-white">{trade.entryDatetime}</span></p>
+                                    <p><span className="text-text-secondary">Preço de Entrada:</span> <span className="font-mono text-white">{formatCurrency(trade.entryPrice)}</span></p>
+                                </div>
+                            </div>
+                             <div>
+                                <h5 className="font-bold text-sm text-primary uppercase tracking-wider mb-2">Drivers Técnicos do Sinal</h5>
+                                <div className="text-xs space-y-1 bg-surface/50 p-2 rounded-md border border-border/50 max-h-32 overflow-y-auto">
+                                    {Object.entries(trade.technicalDrivers).map(([key, value]) => (
+                                        <div key={key} className="flex justify-between">
+                                            <span className="text-text-secondary">{key}:</span>
+                                            <span className="font-semibold text-white font-mono">{formatDriverValue(value)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            )}
+        </>
+    );
+};
+
+
+const TradingJournalTable: React.FC<{ trades: CompletedTrade[]; title: string; t: any }> = ({ trades, title, t }) => {
     if (trades.length === 0) return null;
 
     return (
@@ -85,20 +153,16 @@ const TradingJournalTable: React.FC<{ trades: CompletedTrade[]; title: string; t
                         <tr>
                             <th className="p-3 font-semibold text-text-secondary uppercase">{t.asset}</th>
                             <th className="p-3 font-semibold text-text-secondary uppercase">{t.outcome}</th>
+                            <th className="p-3 font-semibold text-text-secondary uppercase">{t.closingReason}</th>
                             <th className="p-3 font-semibold text-text-secondary uppercase text-right">{t.fees}</th>
                             <th className="p-3 font-semibold text-text-secondary uppercase text-right">{t.profit}</th>
                             <th className="p-3 font-semibold text-text-secondary uppercase text-right">{t.roi}</th>
+                            <th className="p-3 w-12"></th>
                         </tr>
                     </thead>
                     <tbody>
                         {trades.map(trade => (
-                            <tr key={trade.id} className="border-t border-border/50 hover:bg-border/50">
-                                <td className="p-3 font-semibold text-white">{trade.assetName}</td>
-                                <td className={`p-3 font-bold ${outcomeConfig[trade.outcome].color}`}>{outcomeConfig[trade.outcome].text}</td>
-                                <td className="p-3 font-mono text-right text-text-secondary">{formatCurrency(trade.feesUsd)}</td>
-                                <td className={`p-3 font-semibold text-right ${trade.actualProfitUsd >= 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(trade.actualProfitUsd)}</td>
-                                <td className={`p-3 font-semibold text-right ${trade.actualRoiPercentage >= 0 ? 'text-success' : 'text-danger'}`}>{formatPercentage(trade.actualRoiPercentage)}</td>
-                            </tr>
+                           <TradeJournalRow key={trade.id} trade={trade} t={t} />
                         ))}
                     </tbody>
                 </table>
