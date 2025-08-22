@@ -31,13 +31,12 @@ app.post('/api/analysis/sentiment', analysisController.getSentimentAnalysis);
 
 
 // Basic Error Handling Middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+const errorHandler: ErrorRequestHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-  res.statusCode = 500;
-  res.setHeader('Content-Type', 'application/json');
-  res.send(JSON.stringify({ message: 'An internal server error occurred', error: errorMessage }));
-});
+  res.status(500).json({ message: 'An internal server error occurred', error: errorMessage });
+};
+app.use(errorHandler);
 
 
 app.listen(PORT, () => {

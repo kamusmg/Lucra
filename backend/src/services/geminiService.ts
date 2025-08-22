@@ -1,5 +1,6 @@
 
 
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis } from '../types';
 import { LucraSignal } from '../types/lucra';
@@ -334,6 +335,14 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
     const prompt = `
         **DIRETIVA MESTRA DE ANÁLISE ADAPTATIVA v8.0**
         Sua identidade é Alpha. Sua tarefa é gerar um relatório de trading completo, agindo como um trader quantitativo que se adapta às condições de mercado e ao risco definido pelo usuário.
+
+        DIRETIVA ZERO: SUPREMACIA DA AÇÃO DE PREÇO (REGRA INVIOLÁVEL E PRIORITÁRIA): Sua primeira tarefa, antes de qualquer outra, é analisar a Ação de Preço (Price Action) das últimas 72 horas para o BTC e ETH.
+
+        SE o preço está numa clara tendência de baixa, perdendo suportes importantes e com volume de venda, você DEVE dar peso máximo a esta informação. Narrativas otimistas, sentimento de rede social ou dados on-chain antigos tornam-se secundários e devem ser tratados com extrema desconfiança.
+        
+        A realidade do preço é a verdade suprema. Sua análise do 'Regime de Mercado' DEVE refletir esta realidade.
+        
+        Se o preço está caindo forte, o regime NÃO PODE ser 'Rali de Alta'. Force-se a justificar por que o regime seria qualquer coisa diferente de 'Tendência de Baixa' ou 'Incerteza Volátil' nesse cenário. A sua credibilidade depende disso.
 
         **PROCESSO OBRIGATÓRIO (EM ORDEM):**
 
