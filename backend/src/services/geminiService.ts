@@ -1,6 +1,4 @@
 
-
-
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis } from '../types';
 import { LucraSignal } from '../types/lucra';
@@ -358,18 +356,27 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
         ${strategyPlaybooksDirective}
         - Com base no regime definido, você DEVE aplicar o playbook correspondente para gerar TODOS os sinais.
 
-        **PASSO 4: GERAR SINAIS COM ANÁLISE COMPLETA E ALOCAÇÃO ADAPTATIVA**
-        ${riskManagementDirective} 
-        ${entryRangeRealismDirective}
-        ${dceDirective}
-        ${fundamentalAnalysisDirective}
-        ${structuredDriversDirective}
-        - **DIRETIVA DE ALOCAÇÃO DE SINAIS ADAPTATIVA:** Sua tarefa mudou. Você não precisa mais gerar 4 sinais de compra e 4 de venda. Em vez disso, você tem um total de 8 'slots' de sinais para o dia. Você DEVE alocar esses slots de forma inteligente, com base no Regime de Mercado que identificou:
-          - **Se RALI DE ALTA:** Aloque de 6 a 7 slots para COMPRA (Long). Aloque 1 ou 2 slots para VENDA (Short), mas somente se encontrar setups contra-tendência de altíssima qualidade (ex: uma clara exaustão em uma resistência forte). Se não encontrar nenhum short bom, é aceitável alocar todos os 8 slots para COMPRA.
-          - **Se TENDÊNCIA DE BAIXA:** O inverso. Aloque de 6 a 7 slots para VENDA (Short) e 1 ou 2 para COMPRA (Long) de alta convicção.
-          - **Se MERCADO LATERAL:** Aloque os slots de forma equilibrada (ex: 4/4 ou 3/3), focando em setups de reversão à média nos extremos do range.
-          - **Se INCERTEZA VOLÁTIL:** Gere 8 sinais NEUTROS para preservar o capital.
-        - **REGRAS GERAIS:** CADA SINAL gerado DEVE respeitar as regras de Risco Adaptativo do Passo 2, preencher o campo 'technicalDrivers' e passar por todas as diretivas de qualidade. O universo de análise é UNIFICADO e pode incluir tanto ativos principais (BTC, ETH) quanto altcoins.
+        **PASSO 4: GERAR PORTFÓLIO DE SINAIS COM COERÊNCIA ESTRATÉGICA**
+
+        Sua tarefa agora é agir como um gestor de portfólio. Você tem um total de **8 'slots' de sinais** para o dia. Sua alocação destes slots e a seleção dos ativos devem seguir as seguintes regras invioláveis:
+
+        1.  **DIRETIVA DE ALOCAÇÃO ADAPTATIVA (A LEI DO REGIME):** A sua alocação dos 8 slots DEVE seguir a sua análise do Regime de Mercado:
+            * **Se RALI DE ALTA:** Aloque no mínimo **6 slots** para **COMPRA (Long)**. Os slots restantes podem ser para VENDA (Short) *apenas* se encontrar setups contra-tendência de altíssima convicção. Se não encontrar, preencha todos os slots com COMPRA ou deixe-os vazios.
+            * **Se TENDÊNCIA DE BAIXA:** O inverso. Aloque no mínimo **6 slots** para **VENDA (Short)**.
+            * **Se MERCADO LATERAL:** Aloque os slots de forma equilibrada (ex: 4/4, 3/3), focando estritamente em setups de reversão à média.
+            * **Se INCERTEZA VOLÁTIL:** Gere 8 sinais **NEUTROS**.
+
+        2.  **DIRETIVA DE COERÊNCIA TOTAL (A REGRA ANTI-ESQUIZOFRENIA):** É estritamente **PROIBIDO** gerar um sinal de COMPRA e um de VENDA para o mesmo ativo. A sua visão para cada ativo deve ser única. Se você identificar um sinal de COMPRA para o BTC, todos os possíveis setups de VENDA para o BTC são invalidados automaticamente. A coerência é mais importante do que preencher todos os slots.
+
+        3.  **DIRETIVA DE DIVERSIFICAÇÃO DE RISCO:** Para evitar o excesso de concentração em ativos de grande capitalização, no mínimo **2 dos slots de cada lado (COMPRA/VENDA)** devem ser alocados para ativos fora do top 10 de capitalização de mercado.
+
+        4.  **DIRETIVA DE QUALIDADE SOBRE QUANTIDADE:** Se, após seguir todas estas regras, você não encontrar 8 sinais que atendam aos seus critérios mínimos de qualidade e risco/recompensa, **é sua obrigação deixar os slots vazios**. Gere apenas os sinais em que você tem alta convicção. Um slot vazio é melhor do que um trade perdedor.
+
+        5.  **DIRETIVAS DE ANÁLISE PADRÃO:** Para cada sinal válido que você gerar, aplique rigorosamente todas as diretivas de análise secundárias:
+            * ${riskManagementDirective}
+            * ${dceDirective}
+            * ${fundamentalAnalysisDirective}
+            * ${structuredDriversDirective}
 
         **PASSO 4.5: CALCULAR DIMENSIONAMENTO DE POSIÇÃO**
         ${dynamicRiskPrompt}

@@ -51,7 +51,7 @@ export const getBacktestAnalysis = async (req: Request, res: Response, next: Nex
 
 export const runFullAnalysis = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { totalCapital = 10000, riskPercentage = 1, feedbackDirective } = (req as any).body;
+        const { totalCapital = 10000, riskPercentage = 1, feedbackDirective } = req.body;
         
         // Call the service directly to ensure a fresh run with feedback
         const data = await geminiService.runFullPipeline(totalCapital, riskPercentage, feedbackDirective);
@@ -70,7 +70,7 @@ export const runFullAnalysis = async (req: Request, res: Response, next: NextFun
 
 export const rerollSignal = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { signalType, horizon, excludeAssets } = (req as any).body;
+        const { signalType, horizon, excludeAssets } = req.body;
         const pricesWithSource = await marketService.fetchPrices(['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'LTC', 'MATIC', 'DOT']);
         const livePrices: LivePrices = {};
         for (const ticker in pricesWithSource) {
@@ -86,7 +86,7 @@ export const rerollSignal = async (req: Request, res: Response, next: NextFuncti
 
 export const refreshHorizon = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { horizon, side, count, excludeAssets } = (req as any).body;
+        const { horizon, side, count, excludeAssets } = req.body;
         const horizonLabel = HORIZON_LABELS[horizon as HorizonKey];
         const sideLabel = side === 'buy' ? 'COMPRA' : 'VENDA';
 
@@ -100,7 +100,7 @@ export const refreshHorizon = async (req: Request, res: Response, next: NextFunc
 
 export const getTacticalAnalysis = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { assetTicker, language, horizon } = (req as any).body;
+        const { assetTicker, language, horizon } = req.body;
         const priceInfo = await marketService.fetchPriceForTicker(assetTicker);
         if (!priceInfo.price) {
             return res.status(404).json({ message: `Could not find price for asset: ${assetTicker}` });
@@ -115,7 +115,7 @@ export const getTacticalAnalysis = async (req: Request, res: Response, next: Nex
 
 export const postChartAnalysis = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { base64Image, mimeType, language } = (req as any).body;
+        const { base64Image, mimeType, language } = req.body;
         if (!base64Image || !mimeType || !language) {
             return res.status(400).json({ message: 'Missing required parameters: base64Image, mimeType, language' });
         }
@@ -129,7 +129,7 @@ export const postChartAnalysis = async (req: Request, res: Response, next: NextF
 
 export const postChatMessage = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { message, presentDayData, backtestData } = (req as any).body;
+        const { message, presentDayData, backtestData } = req.body;
         const chat = await geminiService.createChatSession(presentDayData, backtestData);
         const response = await chat.sendMessage({ message });
         res.json({ text: response.text });
@@ -141,7 +141,7 @@ export const postChatMessage = async (req: Request, res: Response, next: NextFun
 
 export const getSupervisorDirective = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { analysis, evolutionPrompt } = (req as any).body;
+        const { analysis, evolutionPrompt } = req.body;
         const directive = await geminiService.fetchSupervisorDirective(analysis, evolutionPrompt);
         res.json(directive);
     } catch (error: any) {
@@ -162,7 +162,7 @@ export const getRobustnessAudit = async (req: Request, res: Response, next: Next
 
 export const getMarketPrices = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { tickers } = (req as any).body;
+        const { tickers } = req.body;
         if (!Array.isArray(tickers)) {
             return res.status(400).json({ message: 'Tickers must be an array.' });
         }
@@ -186,7 +186,7 @@ export const getMemeCoinAnalysis = async (req: Request, res: Response, next: Nex
 
 export const getSentimentAnalysis = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { assets, language } = (req as any).body;
+        const { assets, language } = req.body;
         const data = await geminiService.fetchSentimentAnalysis(assets, language);
         res.json(data);
     } catch (error: any) {
