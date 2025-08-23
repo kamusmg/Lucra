@@ -1,3 +1,5 @@
+
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { PresentDayAssetSignal, ChecklistResult } from '../types.ts';
 import { formatCurrency, formatPercentage } from '../utils/formatters.ts';
@@ -249,27 +251,33 @@ export const SignalBlock: React.FC<{
             )}
             <div className="flex-grow">
                 <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary`}>
                             {signal.horizon}
                         </span>
-                         <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${confidenceClasses} text-white`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${confidenceClasses} text-white`}>
                             {t.confidence}: {signal.confidenceLevel}
                         </span>
+                        {onReroll && type && index !== undefined && (
+                            <button 
+                                onClick={() => onReroll(type, index)}
+                                disabled={isRerolling}
+                                className="bg-surface/50 text-text-secondary p-1.5 rounded-full hover:bg-border/70 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title={t.rerollButtonTitle}
+                                aria-label={t.rerollButtonTitle}
+                            >
+                               <RotateCwIcon className="h-4 w-4" />
+                            </button>
+                        )}
                     </div>
-                     {onReroll && type && index !== undefined && (
-                        <button 
-                            onClick={() => onReroll(type, index)}
-                            disabled={isRerolling}
-                            className="flex-shrink-0 bg-primary/20 text-primary p-1.5 rounded-full hover:bg-primary/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={t.rerollButtonTitle}
-                            aria-label={t.rerollButtonTitle}
-                        >
-                           <RotateCwIcon className="h-4 w-4" />
-                        </button>
-                    )}
                 </div>
                 <h5 className="text-lg font-bold text-white tracking-tight mb-2">{signal.assetName}</h5>
+                
+                {signal.setupJustification && (
+                    <div className="my-3 p-2 bg-blue-900/30 border border-blue-500/30 rounded-md text-center">
+                        <p className="text-xs text-blue-200 italic">{signal.setupJustification}</p>
+                    </div>
+                )}
                 
                 <div className="my-4 space-y-2">
                     {signal?.grade && signal?.fundamentalAnalysis && (
@@ -493,12 +501,12 @@ const PresentDaySignalCard: React.FC = () => {
         addPresentDaySignal,
         loadedHorizons,
         horizonsLoading,
-        lazyLoadHorizon
+        lazyLoadHorizon,
+        activeHorizon
     } = useData();
     const { language } = useLanguage();
     const t = translations[language];
     const [tabSide, setTabSide] = useState<'buy' | 'sell'>('buy');
-    const [tabH, setTabH] = useState<HorizonKey>('24h');
 
     const [isRerolling, setIsRerolling] = useState<Record<string, boolean>>({});
     const [rerollErrors, setRerollErrors] = useState<Record<string, string | null>>({});
@@ -507,10 +515,10 @@ const PresentDaySignalCard: React.FC = () => {
 
 
     useEffect(() => {
-        if (!loadedHorizons.has(tabH)) {
-            lazyLoadHorizon(tabH);
+        if (!loadedHorizons.has(activeHorizon)) {
+            lazyLoadHorizon(activeHorizon);
         }
-    }, [tabH, loadedHorizons, lazyLoadHorizon]);
+    }, [activeHorizon, loadedHorizons, lazyLoadHorizon]);
 
     const handleReroll = useCallback(async (type: 'buy' | 'sell', index: number) => {
         if (!presentDayData) return;
@@ -555,7 +563,7 @@ const PresentDaySignalCard: React.FC = () => {
         ];
         
         const signalType = side === 'buy' ? 'COMPRA' : 'VENDA';
-        const horizonLabel = HORIZON_LABELS[tabH];
+        const horizonLabel = HORIZON_LABELS[activeHorizon];
     
         try {
             const newSignal = await apiClient.fetchNewSignal(
@@ -571,7 +579,7 @@ const PresentDaySignalCard: React.FC = () => {
         } finally {
             setIsAddingSignal(null);
         }
-    }, [presentDayData, isAddingSignal, tabH, addPresentDaySignal, t.rerollError]);
+    }, [presentDayData, isAddingSignal, activeHorizon, addPresentDaySignal, t.rerollError]);
     
     const { presentDayBuySignals, presentDaySellSignals, presentDayStrengths, presentDayWeaknesses } = presentDayData || {};
     
@@ -583,15 +591,15 @@ const PresentDaySignalCard: React.FC = () => {
     const buyFiltered = useMemo(
         () => (presentDayBuySignals || [])
           .map((signal, index) => ({ signal, originalIndex: index }))
-          .filter(item => matchesHorizonLabel(item.signal, tabH)),
-        [presentDayBuySignals, tabH, matchesHorizonLabel]
+          .filter(item => matchesHorizonLabel(item.signal, activeHorizon)),
+        [presentDayBuySignals, activeHorizon, matchesHorizonLabel]
     );
 
     const sellFiltered = useMemo(
         () => (presentDaySellSignals || [])
           .map((signal, index) => ({ signal, originalIndex: index }))
-          .filter(item => matchesHorizonLabel(item.signal, tabH)),
-        [presentDaySellSignals, tabH, matchesHorizonLabel]
+          .filter(item => matchesHorizonLabel(item.signal, activeHorizon)),
+        [presentDaySellSignals, activeHorizon, matchesHorizonLabel]
     );
     
     if (isInitialLoading) return <PresentDaySignalCardSkeleton />;
@@ -682,20 +690,9 @@ const PresentDaySignalCard: React.FC = () => {
                                 </button>
                             </div>
                         </div>
-                        
-                        <div className="flex flex-wrap items-center gap-2 mb-6 border-t border-b border-border/50 py-4">
-                            <span className="text-sm font-semibold text-text-secondary mr-2">Horizonte:</span>
-                            {(Object.keys(HORIZON_LABELS) as HorizonKey[]).map(h =>(
-                              <button key={h}
-                                onClick={()=>setTabH(h)}
-                                className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${tabH === h ? "bg-primary text-white" : "bg-surface hover:bg-border text-text-secondary"}`}>
-                                {HORIZON_LABELS[h]}
-                              </button>
-                            ))}
-                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                           {horizonsLoading[tabH] ? (
+                           {horizonsLoading[activeHorizon] ? (
                                 [...Array(4)].map((_, i) => <SignalBlockSkeleton key={i} />)
                            ) : (
                                 <SignalGrid

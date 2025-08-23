@@ -36,6 +36,7 @@ import StarIcon from './components/icons/StarIcon.tsx';
 import MessageCircleIcon from './components/icons/MessageCircleIcon.tsx';
 import ActivityIcon from './components/icons/ActivityIcon.tsx';
 import KeyIcon from './components/icons/KeyIcon.tsx';
+import { HorizonKey, HORIZON_LABELS } from './services/horizonPolicy.ts';
 
 
 
@@ -46,7 +47,7 @@ import AICoreMonitorSkeleton from './components/skeletons/AICoreMonitorSkeleton.
 import BacktestHorizonSectionSkeleton from './components/skeletons/BacktestHorizonSectionSkeleton.tsx';
 
 const AppContent: React.FC = () => {
-  const { isRecalculating, error, runFullAnalysis, presentDayData, backtestData } = useData();
+  const { isRecalculating, error, runFullAnalysis, presentDayData, backtestData, activeHorizon, setActiveHorizon } = useData();
   const { language } = useLanguage();
   const t = translations[language];
 
@@ -79,6 +80,17 @@ const AppContent: React.FC = () => {
               <strong>{t.errorAnalysis}</strong> {error}
             </div>
         )}
+
+        <div className="flex flex-wrap items-center gap-2 mb-8 border-b border-border/50 pb-4">
+            <span className="text-lg font-semibold text-text-secondary mr-2">{t.horizonLabel}:</span>
+            {(Object.keys(HORIZON_LABELS) as HorizonKey[]).map(h =>(
+              <button key={h}
+                onClick={()=>setActiveHorizon(h)}
+                className={`px-4 py-2 rounded-md font-semibold transition-colors text-sm ${activeHorizon === h ? "bg-primary text-white shadow-md" : "bg-surface hover:bg-border text-text-secondary"}`}>
+                {HORIZON_LABELS[h]}
+              </button>
+            ))}
+        </div>
         
         <main className="space-y-12">
           

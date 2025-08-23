@@ -1,6 +1,9 @@
 
 
 
+
+
+
 import React, { createContext, useState, useEffect, useCallback, useContext, ReactNode, useRef } from 'react';
 import { PresentDayAssetSignal, LivePrices, BacktestAnalysisResult, PresentDayAnalysisResult, MemeCoinSignal, CompletedTrade, SentimentAnalysis, Notification, ActiveTrade, ApiKey, OrderStatus, PerformanceMetrics } from '../types.ts';
 import { ApiClient } from '../services/api/client.ts';
@@ -98,6 +101,8 @@ export interface IDataContext {
     notifications: Notification[];
     totalCapital: number;
     riskPercentage: number;
+    activeHorizon: HorizonKey;
+    setActiveHorizon: (horizon: HorizonKey) => void;
     runFullAnalysis: () => Promise<void>;
     loadBacktestData: () => Promise<void>;
     handleSendMessage: (message: string) => Promise<void>;
@@ -160,12 +165,13 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
     const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
 
     // --- Phase 8: Risk Management State ---
-    const [totalCapital, setTotalCapitalState] = useState<number>(10000);
-    const [riskPercentage, setRiskPercentageState] = useState<number>(1);
+    const [totalCapital, setTotalCapitalState] = useState<number>(100);
+    const [riskPercentage, setRiskPercentageState] = useState<number>(5);
 
 
     const [loadedHorizons, setLoadedHorizons] = useState(new Set<HorizonKey>(['24h']));
     const [horizonsLoading, setHorizonsLoading] = useState<{[key in HorizonKey]?: boolean}>({});
+    const [activeHorizon, setActiveHorizon] = useState<HorizonKey>('24h');
     
     const pendingSignalsRef = useRef(pendingSignals);
     pendingSignalsRef.current = pendingSignals;
@@ -207,12 +213,17 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             } catch (e) { console.error("Failed to parse pending signals", e); }
         }
         const savedCapital = localStorage.getItem(TOTAL_CAPITAL_KEY);
-        if (savedCapital) {
-            try { setTotalCapitalState(parseFloat(savedCapital)); } catch (e) { console.error("Failed to parse total capital", e); }
+        try { 
+            setTotalCapitalState(parseFloat(savedCapital || '100')); 
+        } catch (e) { 
+            console.error("Failed to parse total capital", e); 
         }
+
         const savedRisk = localStorage.getItem(RISK_PERCENTAGE_KEY);
-        if (savedRisk) {
-            try { setRiskPercentageState(parseFloat(savedRisk)); } catch (e) { console.error("Failed to parse risk percentage", e); }
+        try { 
+            setRiskPercentageState(parseFloat(savedRisk || '5')); 
+        } catch (e) { 
+            console.error("Failed to parse risk percentage", e); 
         }
     }, []);
 
@@ -912,6 +923,8 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             notifications,
             totalCapital,
             riskPercentage,
+            activeHorizon,
+            setActiveHorizon,
             runFullAnalysis,
             loadBacktestData,
             handleSendMessage,

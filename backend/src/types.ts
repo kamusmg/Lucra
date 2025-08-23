@@ -1,4 +1,5 @@
 
+
 export interface BacktestSignal {
   assetName: string;
   signalType: 'COMPRA' | 'VENDA';
@@ -42,6 +43,8 @@ export interface PresentDayAssetSignal {
   ivlPercentage?: number;
   livePrice?: string | null;
   livePriceSource?: string;
+  setupJustification?: string;
+
 
   // New fields for per-signal analysis
   strongPoints?: string[];

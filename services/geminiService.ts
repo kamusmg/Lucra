@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis, Narrative } from '../types.ts';
 import { LucraSignal } from '../types/lucra.ts';
@@ -95,7 +96,7 @@ const riskManagementDirective = `
     1.  **DIREÇÃO DA OPERAÇÃO (FILTRO DE TENDÊNCIA):**
         -   SÓ gere sinais a favor da tendência principal do timeframe do sinal.
 
-    2.  **FILTROS DE ENTRADA (CONFLUÊNCIA OBRIGATÓRIA):**
+    2.  **FILTROS DE ENTRADA (CONFLUÊNCIA OBRIGATÁRIA):**
         -   Uma entrada SÓ é válida se confirmada por, no mínimo, DOIS indicadores técnicos independentes.
 
     3.  **CÁLCULO DE ALVOS E STOPS (BASEADO EM VOLATILIDADE):**
@@ -163,6 +164,7 @@ const presentDaySignalSchema = {
         probability: { type: Type.STRING, description: "A probabilidade de sucesso da operação (e.g., '65%')."},
         target: { type: Type.STRING, description: "O preço alvo para la realização de lucro."},
         stopLoss: { type: Type.STRING, description: "O preço sugerido para o stop-loss."},
+        setupJustification: { type: Type.STRING, description: "Breve explicação da lógica do setup (ex: 'Setup de pullback para a média móvel de 21 períodos')." },
         horizon: { type: Type.STRING, enum: ['24 Horas', '7 Dias', '30 Dias', '1 Ano'], description: "O horizonte de tempo da projeção (e.g., '24 Horas', '7 Dias', '30 Dias', '1 Ano')." },
         technicalDrivers: {
             type: Type.OBJECT,
@@ -245,7 +247,7 @@ const presentDaySignalSchema = {
         recommendedPositionSize: { type: Type.NUMBER, description: "O tamanho da posição calculado em USD, com base no risco dinâmico." },
         riskPerTrade: { type: Type.NUMBER, description: "O valor do risco em USD para esta operação específica." },
     },
-    required: ["assetName", "signalType", "entryRange", "probability", "target", "stopLoss", "horizon", "technicalDrivers", "confidenceLevel", "profitProjectionUsd", "roiProjectionPercentage", "strategy", "entryDatetime", "exitDatetime", "grade", "fundamentalAnalysis", "onChainIntelligence", "automationSetup", "isTopSignal", "recommendedPositionSize", "riskPerTrade"],
+    required: ["assetName", "signalType", "entryRange", "probability", "target", "stopLoss", "horizon", "technicalDrivers", "confidenceLevel", "profitProjectionUsd", "roiProjectionPercentage", "strategy", "entryDatetime", "exitDatetime", "grade", "fundamentalAnalysis", "onChainIntelligence", "automationSetup", "isTopSignal", "recommendedPositionSize", "riskPerTrade", "setupJustification"],
 };
 
 
@@ -335,7 +337,7 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
 
 
     const prompt = `
-        **DIRETIVA MESTRA DE ANÁLISE ADAPTATIVA v8.0**
+        **DIRETIVA MESTRA DE ANÁLISE ADAPTATIVA v8.1**
         Sua identidade é Alpha. Sua tarefa é gerar um relatório de trading completo, agindo como um trader quantitativo que se adapta às condições de mercado e ao risco definido pelo usuário.
 
         DIRETIVA ZERO: SUPREMACIA DA AÇÃO DE PREÇO (REGRA INVIOLÁVEL E PRIORITÁRIA): Sua primeira tarefa, antes de qualquer outra, é analisar a Ação de Preço (Price Action) das últimas 72 horas para o BTC e ETH.
@@ -376,7 +378,9 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
 
         4.  **DIRETIVA DE QUALIDADE SOBRE QUANTIDADE:** Se, após seguir todas estas regras, você não encontrar 8 sinais que atendam aos seus critérios mínimos de qualidade e risco/recompensa, **é sua obrigação deixar os slots vazios**. Gere apenas os sinais em que você tem alta convicção. Um slot vazio é melhor do que um trade perdedor.
 
-        5.  **DIRETIVAS DE ANÁLISE PADRÃO:** Para cada sinal válido que você gerar, aplique rigorosamente todas as diretivas de análise secundárias:
+        5.  **DIRETIVA DE JUSTIFICATIVA DO SETUP:** Para cada sinal, preencha o campo 'setupJustification'. Se a 'entryRange' for significativamente diferente do preço atual, explique o motivo. Exemplo: "Estratégia de pullback, aguardando um reteste do suporte em $112.000 para uma entrada de maior probabilidade."
+
+        6.  **DIRETIVAS DE ANÁLISE PADRÃO:** Para cada sinal válido que você gerar, aplique rigorosamente todas as diretivas de análise secundárias:
             * ${riskManagementDirective}
             * ${dceDirective}
             * ${fundamentalAnalysisDirective}
@@ -487,6 +491,7 @@ export const fetchNewSignal = async (options: {
     **DATA REAL:** O ano atual é ${currentYear}. 'entryDatetime' DEVE ser ${formattedDate}.
     ${riskManagementDirective}
     ${structuredDriversDirective}
+    **DIRETIVA DE JUSTIFICATIVA DO SETUP:** Para cada sinal, preencha o campo 'setupJustification'. Se a 'entryRange' for significativamente diferente do preço atual, explique o motivo.
     O ativo NÃO PODE estar na lista: ${excludeAssets.join(', ')}.
     A resposta DEVE ser um único objeto JSON aderindo ao schema 'presentDaySignalSchema'.
     O campo 'isTopSignal' DEVE ser 'false'.
@@ -527,7 +532,7 @@ export const fetchNewSignalsForHorizon = async (
     const currentYear = serverTime.year;
 
     const prompt = `
-**DIRETIVA MESTRA DE ANÁLISE ADAPTATIVA v8.0**
+**DIRETIVA MESTRA DE ANÁLISE ADAPTATIVA v8.1**
 Sua identidade é Alpha. Sua tarefa é gerar um conjunto de sinais de trading de alta qualidade para o horizonte de tempo "${horizon}", agindo como um trader quantitativo que se adapta às condições de mercado.
 
 **PROCESSO OBRIGATÓRIO (EM ORDEM):**
@@ -556,6 +561,7 @@ ${structuredDriversDirective}
     - CADA SINAL DEVE respeitar as regras de Risco Adaptativo do Passo 2.
     - O campo 'isTopSignal' DEVE ser 'false' para todos.
     - Gere apenas sinais de ${side}, NUNCA 'NEUTRO'.
+    - **DIRETIVA DE JUSTIFICATIVA DO SETUP:** Para cada sinal, preencha o campo 'setupJustification'. Se a 'entryRange' for significativamente diferente do preço atual, explique o motivo.
 
 **PASSO 4.5: CALCULAR DIMENSIONAMENTO DE POSIÇÃO (PADRÃO)**
 - Para cada sinal gerado, calcule 'recommendedPositionSize' e 'riskPerTrade' com base em um capital padrão de $10,000 e risco de 1%.
@@ -624,8 +630,9 @@ export const fetchTacticalAnalysis = async (assetTicker: string, livePrice: stri
         **REGRAS:**
         1.  **MOTOR PRINCIPAL:** Use o mesmo processo que gera os sinais do painel diário, incluindo os 3 pilares de análise (Fundamental, On-Chain, Automação).
         2.  **OUTPUT COMPLETO:** A resposta DEVE ser um único objeto JSON que obedece estritamente ao schema \`presentDaySignalSchema\`. Isso inclui preencher todos os campos: \`strongPoints\`, \`weakPoints\`, \`specialModes\`, \`checklistResult\`, \`onChainIntelligence\`, \`automationSetup\`, etc. O campo 'isTopSignal' DEVE ser 'false'. Os campos 'recommendedPositionSize' e 'riskPerTrade' devem ser calculados com base em um capital de $10.000 e risco de 1%.
-        3.  **SINAL NEUTRO:** Se o ativo não puder ser analisado ou não apresentar uma oportunidade clara, retorne um sinal 'NEUTRO' com as justificativas apropriadas e campos financeiros zerados.
-        4.  **IDIOMA:** A resposta final, incluindo todos os campos de texto, DEVE ser em ${language === 'pt' ? 'Português' : 'Inglês'}.
+        3.  **JUSTIFICATIVA DO SETUP:** Preencha o campo 'setupJustification'. Se a 'entryRange' for significativamente diferente do preço atual, explique o motivo (ex: 'Pullback para suporte').
+        4.  **SINAL NEUTRO:** Se o ativo não puder ser analisado ou não apresentar uma oportunidade clara, retorne um sinal 'NEUTRO' com as justificativas apropriadas e campos financeiros zerados.
+        5.  **IDIOMA:** A resposta final, incluindo todos os campos de texto, DEVE ser em ${language === 'pt' ? 'Português' : 'Inglês'}.
 
         A resposta DEVE ser um único objeto JSON.
     `;
