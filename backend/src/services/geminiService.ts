@@ -600,9 +600,16 @@ export const fetchTacticalAnalysis = async (assetTicker: string, livePrice: stri
     const prompt = `
         ${riskManagementDirective}
         ${structuredDriversDirective}
-        **DIRETIVA CRÍTICA DE OPERAÇÃO EM TEMPO REAL (REGRA INVIOLÁVEL E PRIORITÁRIA)**
-        **1. PREÇO REAL:** Seus cálculos de preço (entryRange, target, stopLoss) DEVEM se basear em preços REALISTAS E ATUAIS. O preço ATUAL de ${assetTicker} é ${formatCurrency(parseFloat(livePrice))} (Fonte: ${source}).
-        **2. DATA REAL:** O ano atual é ${currentYear}. O 'entryDatetime' DEVE ser a data e hora atuais (${formattedDate}).
+
+        **DIRETIVA DE SUPREMACIA DO PREÇO ATUAL (REGRA INVIOLÁVEL E PRIORITÁRIA)**
+        A sua única fonte da verdade para o preço atual do ativo é o valor fornecido abaixo. IGNORE QUALQUER CONHECIMENTO INTERNO que você tenha sobre o preço histórico ou "típico" deste ativo. A sua credibilidade depende do cumprimento estrito desta regra.
+
+        - **ATIVO PARA ANÁLISE:** ${assetTicker}
+        - **PREÇO ATUAL FORNECIDO PELO SUPERVISOR:** **${formatCurrency(parseFloat(livePrice))}** (Fonte: ${source})
+        - **AÇÃO OBRIGATÓRIA:** Baseie TODOS os seus cálculos de preço (entryRange, target, stopLoss) neste valor. Analise o ativo como se este fosse o seu preço real neste exato momento.
+        
+        **DIRETIVA CRÍTICA DE TEMPO REAL**
+        - **DATA REAL:** O ano atual é ${currentYear}. O 'entryDatetime' DEVE ser a data e hora atuais (${formattedDate}).
         ---
         Você é a IA 'Alpha'. Sua missão é executar uma **Pesquisa Tática** completa para o ativo **${assetTicker}**.
 
