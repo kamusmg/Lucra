@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Notification } from '../types';
@@ -7,6 +6,8 @@ import SparklesIcon from './SparklesIcon';
 import BellIcon from './icons/BellIcon';
 import XIcon from './icons/XIcon';
 import ActivityIcon from './icons/ActivityIcon';
+import { useLanguage } from '../contexts/LanguageContext';
+import { translations } from '../utils/translations';
 
 interface ToastProps {
     notification: Notification;
@@ -21,7 +22,7 @@ const Toast: React.FC<ToastProps> = ({ notification, onDismiss }) => {
             setIsExiting(true);
             const dismissTimer = setTimeout(() => onDismiss(notification.id), 300);
             return () => clearTimeout(dismissTimer);
-        }, 7000); // 7 seconds until dismiss
+        }, 5000); // 5 seconds until dismiss
 
         return () => clearTimeout(timer);
     }, [notification.id, onDismiss]);
@@ -73,6 +74,8 @@ const Toast: React.FC<ToastProps> = ({ notification, onDismiss }) => {
 
 const NotificationToasts: React.FC = () => {
     const { notifications } = useData();
+    const { language } = useLanguage();
+    const t = translations[language];
     const [toasts, setToasts] = useState<Notification[]>([]);
     const [lastSeenTimestamp, setLastSeenTimestamp] = useState<string>(new Date(0).toISOString());
 
@@ -91,11 +94,28 @@ const NotificationToasts: React.FC = () => {
         setToasts(prev => prev.filter(toast => toast.id !== id));
     };
 
+    const handleDismissAll = () => {
+        setToasts([]);
+    };
+
     return (
-        <div className="fixed top-20 right-4 z-50 space-y-3 w-full max-w-sm">
-            {toasts.map(notification => (
-                <Toast key={notification.id} notification={notification} onDismiss={handleDismiss} />
-            ))}
+        <div className="fixed top-20 right-4 z-50 w-full max-w-sm">
+            <div className="space-y-3">
+                {toasts.map(notification => (
+                    <Toast key={notification.id} notification={notification} onDismiss={handleDismiss} />
+                ))}
+            </div>
+            {toasts.length > 1 && (
+                <div className="flex justify-end pt-2">
+                    <button
+                        onClick={handleDismissAll}
+                        className="text-xs font-semibold text-text-secondary hover:text-white bg-surface/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50 hover:border-primary/50 transition-colors flex items-center gap-1.5"
+                    >
+                        <XIcon className="h-3 w-3" strokeWidth={3} />
+                        <span>{t.clearAll}</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
