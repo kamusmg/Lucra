@@ -1,5 +1,4 @@
-import express from 'express';
-import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
+import express, { ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import * as analysisController from './api/analysisController';
@@ -32,7 +31,7 @@ app.post('/api/analysis/sentiment', analysisController.getSentimentAnalysis);
 
 
 // Basic Error Handling Middleware
-const errorHandler: ErrorRequestHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+const errorHandler: ErrorRequestHandler = (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
   const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
   res.status(500).json({ message: 'An internal server error occurred', error: errorMessage });
