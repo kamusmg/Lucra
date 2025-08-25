@@ -1,5 +1,4 @@
 
-
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis } from '../types';
 import { LucraSignal } from '../types/lucra';
@@ -325,12 +324,12 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
     `;
 
     const feedbackPrompt = feedbackDirective ? `
-        **DIRETIVA DE FEEDBACK DE PERFORMANCE REAL (DO SUPERVISOR) v1.0 - REGRA OBRIGATÓRIA:**
-        Alpha, seu desempenho histórico em paper trading nesta sessão é o seguinte:
-        ${feedbackDirective}
-        **AÇÃO:** Você DEVE ajustar sua confiança e seus critérios com base neste feedback. Se um tipo de operação (ex: VENDA) está com baixo desempenho, seja extremamente mais crítico e conservador ao gerar esses sinais. Mencione este ajuste em suas 'presentDayWeaknesses' e justifique como você está incorporando este feedback.
-        ---
-    ` : '';
+**DIRETIVA DE FEEDBACK DE PERFORMANCE REAL (DO SUPERVISOR) v1.0 - REGRA OBRIGATÓRIA:**
+Alpha, seu desempenho histórico em paper trading nesta sessão é o seguinte:
+${feedbackDirective}
+**AÇÃO:** Você DEVE ajustar sua confiança, seus critérios e sua análise de regime com base neste feedback. Se uma estratégia (ex: VENDA) está com desempenho catastrófico, seja extremamente mais crítico e conservador ao gerar esses sinais. Mencione este ajuste em suas 'presentDayWeaknesses' e justifique como você está a incorporar este feedback para reverter os resultados negativos.
+---
+` : '';
 
     const prompt = `
         **DIRETIVA MESTRA DE ANÁLISE ADAPTATIVA v8.1**

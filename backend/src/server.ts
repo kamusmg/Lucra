@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
+import express from 'express';
+import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import * as analysisController from './api/analysisController';

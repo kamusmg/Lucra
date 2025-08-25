@@ -1,5 +1,4 @@
 
-
 // This file acts as a "mock" or "simulated" backend.
 // Instead of making network requests, it calls the local AI service functions directly.
 // This allows the app to run fully self-contained in environments like AI Studio.

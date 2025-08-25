@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as geminiService from '../services/geminiService';
 import * as marketService from '../services/marketService';
 import { HorizonKey, HORIZON_LABELS } from '../services/horizonPolicy';
-import { PresentDayAnalysisResult, BacktestAnalysisResult, LivePrices, Horizon } from '../types';
+import type { PresentDayAnalysisResult, BacktestAnalysisResult, LivePrices, Horizon } from '../types';
 
 // To cache the full analysis result
 let analysisCache: {
@@ -14,9 +14,9 @@ let analysisCache: {
     backtest: null,
 };
 
-const ensurePresentDayAnalysis = async (totalCapital?: number, riskPercentage?: number) => {
+const ensurePresentDayAnalysis = async (totalCapital?: number, riskPercentage?: number, feedbackDirective?: string) => {
     if (!analysisCache.presentDay) {
-        analysisCache.presentDay = await geminiService.runFullPipeline(totalCapital || 10000, riskPercentage || 1);
+        analysisCache.presentDay = await geminiService.runFullPipeline(totalCapital || 10000, riskPercentage || 1, feedbackDirective);
         geminiService.setLastPresentDayAnalysis(analysisCache.presentDay);
     }
     return analysisCache.presentDay;

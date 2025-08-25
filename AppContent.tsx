@@ -1,4 +1,3 @@
-
 import React, { Suspense } from 'react';
 import { useData } from './contexts/DataContext.tsx';
 import { useLanguage } from './contexts/LanguageContext.tsx';
@@ -20,6 +19,7 @@ import NotificationToasts from './components/NotificationToast.tsx';
 import LivePositionsPanel from './components/LivePositionsPanel.tsx';
 import ApiKeyManager from './components/ApiKeyManager.tsx';
 import Glossary from './components/Glossary.tsx';
+import PerformanceFeedback from './components/PerformanceFeedback.tsx';
 
 
 import CollapsibleSection from './components/CollapsibleSection.tsx';
@@ -47,7 +47,7 @@ import AICoreMonitorSkeleton from './components/skeletons/AICoreMonitorSkeleton.
 import BacktestHorizonSectionSkeleton from './components/skeletons/BacktestHorizonSectionSkeleton.tsx';
 
 const AppContent: React.FC = () => {
-  const { isRecalculating, error, runFullAnalysis, presentDayData, backtestData, activeHorizon, setActiveHorizon } = useData();
+  const { isRecalculating, error, runFullAnalysis, presentDayData, backtestData, activeHorizon, setActiveHorizon, performanceFeedback } = useData();
   const { language } = useLanguage();
   const t = translations[language];
 
@@ -74,6 +74,8 @@ const AppContent: React.FC = () => {
             </button>
           </div>
         </header>
+
+        {performanceFeedback && <PerformanceFeedback feedbackText={performanceFeedback} />}
 
         {error && (
             <div className="bg-danger/10 border border-danger/50 text-red-300 p-3 rounded-lg text-center text-sm mb-8">

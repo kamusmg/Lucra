@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { createContext, useState, useEffect, useCallback, useContext, ReactNode, useRef } from 'react';
 import { PresentDayAssetSignal, LivePrices, BacktestAnalysisResult, PresentDayAnalysisResult, MemeCoinSignal, CompletedTrade, SentimentAnalysis, Notification, ActiveTrade, ApiKey, OrderStatus, PerformanceMetrics } from '../types.ts';
 import { ApiClient } from '../services/api/client.ts';
@@ -48,35 +42,6 @@ const parseEntryRange = (rangeStr: string | null | undefined): { start: number; 
     return null;
 };
 
-const calculateMetrics = (trades: CompletedTrade[]): PerformanceMetrics => {
-    const totalTrades = trades.length;
-    if (totalTrades === 0) {
-        return { totalTrades: 0, wins: 0, losses: 0, winRate: 0, profitFactor: null, totalNetProfit: 0, averageRoi: 0 };
-    }
-
-    const wins = trades.filter(t => t.outcome === 'Win');
-    const losses = trades.filter(t => t.outcome === 'Loss');
-    
-    const totalProfitFromWins = wins.reduce((acc, t) => acc + t.actualProfitUsd, 0);
-    const totalLossFromLosses = Math.abs(losses.reduce((acc, t) => acc + t.actualProfitUsd, 0));
-
-    const winRate = (wins.length / totalTrades) * 100;
-    const profitFactor = totalLossFromLosses > 0 ? totalProfitFromWins / totalLossFromLosses : null;
-    const totalNetProfit = trades.reduce((acc, t) => acc + t.actualProfitUsd, 0);
-    const averageRoi = trades.reduce((acc, t) => acc + t.actualRoiPercentage, 0) / totalTrades;
-
-    return {
-        totalTrades,
-        wins: wins.length,
-        losses: losses.length,
-        winRate,
-        profitFactor,
-        totalNetProfit,
-        averageRoi,
-    };
-};
-
-
 export interface IDataContext {
     presentDayData: PresentDayAnalysisResult | null;
     backtestData: BacktestAnalysisResult | null;
@@ -101,6 +66,7 @@ export interface IDataContext {
     notifications: Notification[];
     totalCapital: number;
     riskPercentage: number;
+    performanceFeedback: string | null;
     activeHorizon: HorizonKey;
     setActiveHorizon: (horizon: HorizonKey) => void;
     runFullAnalysis: () => Promise<void>;
@@ -168,6 +134,9 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
     const [totalCapital, setTotalCapitalState] = useState<number>(100);
     const [riskPercentage, setRiskPercentageState] = useState<number>(5);
 
+    // --- Prompt 20.5: Performance Feedback State ---
+    const [performanceFeedback, setPerformanceFeedback] = useState<string | null>(null);
+
 
     const [loadedHorizons, setLoadedHorizons] = useState(new Set<HorizonKey>(['24h']));
     const [horizonsLoading, setHorizonsLoading] = useState<{[key in HorizonKey]?: boolean}>({});
@@ -177,6 +146,34 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
     pendingSignalsRef.current = pendingSignals;
     const presentDayDataRef = useRef(presentDayData);
     presentDayDataRef.current = presentDayData;
+
+    const calculateMetrics = (trades: CompletedTrade[]): PerformanceMetrics => {
+        const totalTrades = trades.length;
+        if (totalTrades === 0) {
+            return { totalTrades: 0, wins: 0, losses: 0, winRate: 0, profitFactor: null, totalNetProfit: 0, averageRoi: 0 };
+        }
+    
+        const wins = trades.filter(t => t.outcome === 'Win');
+        const losses = trades.filter(t => t.outcome === 'Loss');
+        
+        const totalProfitFromWins = wins.reduce((acc, t) => acc + t.actualProfitUsd, 0);
+        const totalLossFromLosses = Math.abs(losses.reduce((acc, t) => acc + t.actualProfitUsd, 0));
+    
+        const winRate = (wins.length / totalTrades) * 100;
+        const profitFactor = totalLossFromLosses > 0 ? totalProfitFromWins / totalLossFromLosses : null;
+        const totalNetProfit = trades.reduce((acc, t) => acc + t.actualProfitUsd, 0);
+        const averageRoi = trades.reduce((acc, t) => acc + t.actualRoiPercentage, 0) / totalTrades;
+    
+        return {
+            totalTrades,
+            wins: wins.length,
+            losses: losses.length,
+            winRate,
+            profitFactor,
+            totalNetProfit,
+            averageRoi,
+        };
+    };
 
     useEffect(() => {
         const savedHistory = localStorage.getItem(SIGNAL_HISTORY_KEY);
@@ -261,29 +258,44 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
         });
     }, []);
 
+    const generatePerformanceFeedback = useCallback((): string => {
+        if (completedTrades.length === 0) {
+            return '';
+        }
+    
+        const buyTrades = completedTrades.filter(t => t.signalType === 'COMPRA');
+        const sellTrades = completedTrades.filter(t => t.signalType === 'VENDA');
+    
+        const buyMetrics = calculateMetrics(buyTrades);
+        const sellMetrics = calculateMetrics(sellTrades);
+        
+        const feedbackParts = [];
+    
+        if (buyMetrics.totalTrades > 0) {
+            const profitFactorText = buyMetrics.profitFactor !== null ? buyMetrics.profitFactor.toFixed(2) : '0.00';
+            feedbackParts.push(`COMPRA (Longs) - Taxa de Acerto: ${buyMetrics.winRate.toFixed(0)}%, Fator de Lucro: ${profitFactorText}, Resultado: ${formatCurrency(buyMetrics.totalNetProfit)}.`);
+        }
+        if (sellMetrics.totalTrades > 0) {
+            const profitFactorText = sellMetrics.profitFactor !== null ? sellMetrics.profitFactor.toFixed(2) : '0.00';
+            feedbackParts.push(`VENDA (Shorts) - Taxa de Acerto: ${sellMetrics.winRate.toFixed(0)}%, Fator de Lucro: ${profitFactorText}, Resultado: ${formatCurrency(sellMetrics.totalNetProfit)}.`);
+        }
+    
+        if (feedbackParts.length > 0) {
+            return `Feedback de Performance Recente: ${feedbackParts.join(' ')}`;
+        }
+        return '';
+    }, [completedTrades]);
+
     const runFullAnalysis = useCallback(async () => {
         setIsRecalculating(true);
         setError(null);
+        setPerformanceFeedback(null); // Clear previous feedback
         try {
-            
-            let feedbackDirective = '';
-            if (completedTrades.length > 0) {
-                const buyTrades = completedTrades.filter(t => t.signalType === 'COMPRA');
-                const sellTrades = completedTrades.filter(t => t.signalType === 'VENDA');
-
-                const buyMetrics = calculateMetrics(buyTrades);
-                const sellMetrics = calculateMetrics(sellTrades);
-                
-                const feedbackLines = [];
-                if (buyMetrics.totalTrades > 0) {
-                    feedbackLines.push(`- Desempenho (COMPRA): ${buyMetrics.wins} vitórias, ${buyMetrics.losses} derrotas. Taxa de Acerto: ${buyMetrics.winRate.toFixed(1)}%. Lucro/Prejuízo Líquido: ${formatCurrency(buyMetrics.totalNetProfit)}.`);
-                }
-                if (sellMetrics.totalTrades > 0) {
-                    feedbackLines.push(`- Desempenho (VENDA): ${sellMetrics.wins} vitórias, ${sellMetrics.losses} derrotas. Taxa de Acerto: ${sellMetrics.winRate.toFixed(1)}%. Lucro/Prejuízo Líquido: ${formatCurrency(sellMetrics.totalNetProfit)}.`);
-                }
-                feedbackDirective = feedbackLines.join('\n');
+            const feedbackDirective = generatePerformanceFeedback();
+            if (feedbackDirective) {
+                setPerformanceFeedback(feedbackDirective); // Set new feedback for display
             }
-
+            
             const baseAssetsForSentiment = ['BTC', 'ETH', 'SOL', 'DOGE', 'SHIB', 'PEPE', 'WIF'];
             const uniqueAssetsForSentiment = Array.from(new Set([...baseAssetsForSentiment, ...watchlist]));
             
@@ -334,7 +346,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             // React treats it as a no-op. This removes the dependency cycle.
             setIsInitialLoading(false);
         }
-    }, [apiClient, language, addNotification, t, totalCapital, riskPercentage, completedTrades, watchlist]);
+    }, [apiClient, language, addNotification, t, totalCapital, riskPercentage, generatePerformanceFeedback, watchlist]);
     
 
     // Phase 4.5, Pilar 3: Simulate order execution for pending trades
@@ -373,23 +385,23 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
 
             let signalsChanged = false;
             
-            // 1. Manage Expiration: Remove signals older than 24 hours
+            // 1. Manage Expiration: Remove signals that have passed their exit time
             const now = DateTime.now();
             const freshSignals = currentPendingSignals.filter(signal => {
-                if (!signal || typeof signal.entryDatetime !== 'string') {
-                    if (signal) console.warn('Pending signal found without string entryDatetime', signal);
+                if (!signal || typeof signal.exitDatetime !== 'string') {
+                    if (signal) console.warn('Pending signal found without string exitDatetime', signal);
                     return false;
                 }
                 try {
-                    const entryTime = DateTime.fromFormat(signal.entryDatetime, 'dd/MM/yyyy HH:mm:ss');
-                    if (!entryTime.isValid) {
-                         console.warn('Could not parse date for expiration check', signal.entryDatetime);
-                         return false;
+                    const exitTime = DateTime.fromFormat(signal.exitDatetime, 'dd/MM/yyyy HH:mm:ss');
+                    if (!exitTime.isValid) {
+                         console.warn('Could not parse date for expiration check', signal.exitDatetime);
+                         return false; // Discard signals with invalid dates
                     }
-                    // A signal is fresh if its expiration (entry time + 24h) is after the current time.
-                    return entryTime.plus({ hours: 24 }) >= now;
+                    // A signal is fresh if its exit time is in the future.
+                    return exitTime >= now;
                 } catch (e) {
-                    console.warn('Error during date parsing for expiration check', signal.entryDatetime, e);
+                    console.warn('Error during date parsing for expiration check', signal.exitDatetime, e);
                     return false;
                 }
             });
@@ -923,6 +935,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             notifications,
             totalCapital,
             riskPercentage,
+            performanceFeedback,
             activeHorizon,
             setActiveHorizon,
             runFullAnalysis,
