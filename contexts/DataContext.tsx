@@ -27,13 +27,13 @@ const parseEntryRange = (rangeStr: string | null | undefined): { start: number; 
     if (!rangeStr || typeof rangeStr !== 'string') return null;
     
     // Handle single values
-    const singleVal = parseFloat(rangeStr);
+    const singleVal = parseFloat(rangeStr.replace(/[^0-9.-]/g, ''));
     if (!isNaN(singleVal) && !rangeStr.includes('-')) {
         return { start: singleVal, end: singleVal };
     }
     
     // Handle ranges
-    const parts = rangeStr.split('-').map(s => parseFloat(s.trim()));
+    const parts = rangeStr.split('-').map(s => parseFloat(s.trim().replace(/[^0-9.-]/g, '')));
     
     if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
         return { start: Math.min(parts[0], parts[1]), end: Math.max(parts[0], parts[1]) };
@@ -434,11 +434,34 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                     if (priceInfo && priceInfo.price && range) {
                         const currentPrice = parseFloat(priceInfo.price);
                         
-                        if (currentPrice >= range.start && currentPrice <= range.end) {
+                        let isTriggered = false;
+                        if (signal.signalType === 'COMPRA') {
+                            // A buy signal triggers if the current price drops to or below the HIGHEST price in the entry range.
+                            // This simulates a limit order filling at the top of the desired buy zone or better (lower).
+                            if (currentPrice <= range.end) {
+                                isTriggered = true;
+                            }
+                        } else { // VENDA
+                            // A sell signal triggers if the current price rises to or above the LOWEST price in the entry range.
+                            // This simulates a limit order filling at the bottom of the desired sell zone or better (higher).
+                            if (currentPrice >= range.start) {
+                                isTriggered = true;
+                            }
+                        }
+
+                        if (isTriggered) {
                             signalsChanged = true;
                             // TRIGGER! Create ActiveTrade
-                            const slippage = (Math.random() * 2 - 1) * (MAX_SLIPPAGE_PERCENT / 100);
-                            const finalEntryPrice = currentPrice * (1 + slippage);
+                            const slippageFactor = Math.random() * (MAX_SLIPPAGE_PERCENT / 100); // Always a positive factor
+                            let finalEntryPrice;
+                            if (signal.signalType === 'COMPRA') {
+                                // Slippage makes buy price slightly higher (worse)
+                                finalEntryPrice = currentPrice * (1 + slippageFactor);
+                            } else { // VENDA
+                                // Slippage makes sell price slightly lower (worse)
+                                finalEntryPrice = currentPrice * (1 - slippageFactor);
+                            }
+                            
                             const marketRegime = currentPresentDayData?.macroContext?.find(ind => ind.name.toLowerCase().includes('regime'))?.value || 'Indefinido';
                             
                             newActiveTrades.push({
@@ -589,8 +612,16 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                             };
 
                             // Apply exit slippage
-                            const exitSlippage = (Math.random() * 2 - 1) * (MAX_SLIPPAGE_PERCENT / 100);
-                            const adjustedExitPrice = currentPrice * (1 - exitSlippage); // Slippage against you
+                            const exitSlippageFactor = Math.random() * (MAX_SLIPPAGE_PERCENT / 100);
+                            let adjustedExitPrice;
+
+                            if (trade.signalType === 'COMPRA') {
+                                // For a buy trade, we are selling to exit. Slippage gives us a lower price.
+                                adjustedExitPrice = currentPrice * (1 - exitSlippageFactor);
+                            } else { // VENDA
+                                // For a sell trade, we are buying to exit. Slippage gives us a higher price.
+                                adjustedExitPrice = currentPrice * (1 + exitSlippageFactor);
+                            }
 
                             let grossPnlPercentage;
                             if (trade.signalType === 'COMPRA') {
@@ -666,23 +697,21 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                 if (!signal.livePrice || signal.signalType === 'NEUTRO') continue;
 
                 const livePrice = parseFloat(signal.livePrice);
-                const [entryStartStr, entryEndStr] = signal.entryRange.split('-').map(s => s.trim());
-                const entryStart = parseFloat(entryStartStr);
-                const entryEnd = entryEndStr ? parseFloat(entryEndStr) : entryStart;
+                const range = parseEntryRange(signal.entryRange);
 
-                if (isNaN(livePrice) || isNaN(entryStart)) continue;
+                if (isNaN(livePrice) || !range) continue;
 
                 const proximityThreshold = 0.02; // 2%
                 let isNear = false;
 
                 if (signal.signalType === 'COMPRA') {
-                    const lowerBound = entryEnd * (1 - proximityThreshold);
-                    if (livePrice >= lowerBound && livePrice <= entryEnd) {
+                    const lowerBound = range.end * (1 - proximityThreshold);
+                    if (livePrice >= lowerBound && livePrice <= range.end) {
                         isNear = true;
                     }
                 } else { // VENDA
-                    const upperBound = entryStart * (1 + proximityThreshold);
-                     if (livePrice <= upperBound && livePrice >= entryStart) {
+                    const upperBound = range.start * (1 + proximityThreshold);
+                     if (livePrice <= upperBound && livePrice >= range.start) {
                         isNear = true;
                     }
                 }
