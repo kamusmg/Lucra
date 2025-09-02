@@ -358,10 +358,20 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
             setActiveTrades(currentTrades => {
                 const updatedTrades = currentTrades.map(trade => {
                     if (trade.orderStatus === 'Pending') {
+                        const rand = Math.random();
+                        let newStatus: OrderStatus = 'Filled';
+                        let newDetails = t.tooltipFilled;
+
+                        // Simulate 20% chance of a partial fill due to volatility
+                        if (rand < 0.2) { 
+                            newStatus = 'Partial Fill';
+                            newDetails = t.tooltipPartialFill;
+                        }
+
                         return { 
                             ...trade, 
-                            orderStatus: 'Filled' as OrderStatus, 
-                            executionDetails: t.tooltipFilled 
+                            orderStatus: newStatus, 
+                            executionDetails: newDetails,
                         };
                     }
                     return trade;
@@ -373,7 +383,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
     
         return () => clearTimeout(timer);
     
-    }, [activeTrades, t.tooltipFilled]);
+    }, [activeTrades, t.tooltipFilled, t.tooltipPartialFill]);
 
     // NEW: Trigger Engine for Pending Signals
     useEffect(() => {

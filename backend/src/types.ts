@@ -1,5 +1,4 @@
 
-
 export interface BacktestSignal {
   assetName: string;
   signalType: 'COMPRA' | 'VENDA';
@@ -404,7 +403,7 @@ export interface Notification {
 }
 
 // --- New types for Paper Trading (Phase 4.5) ---
-export type OrderStatus = 'Pending' | 'Filled' | 'Error';
+export type OrderStatus = 'Pending' | 'Filled' | 'Error' | 'Partial Fill';
 
 export interface ActiveTrade extends Omit<PresentDayAssetSignal, 'signalType'> {
   id: string;

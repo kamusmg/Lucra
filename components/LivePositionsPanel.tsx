@@ -12,6 +12,7 @@ import CheckCircleIcon from './icons/CheckCircleIcon';
 import CautionIcon from './CautionIcon.tsx';
 import { DateTime } from 'luxon';
 import TrashIcon from './icons/TrashIcon.tsx';
+import PieChartIcon from './icons/PieChartIcon.tsx';
 
 const StatusIndicator: React.FC<{ status: OrderStatus; details: string; t: any }> = ({ status, details, t }) => {
     const config: { [key in OrderStatus]: { icon: React.ReactNode; color: string; label: string; tooltip: string } } = {
@@ -26,6 +27,12 @@ const StatusIndicator: React.FC<{ status: OrderStatus; details: string; t: any }
             color: 'text-success',
             label: t.statusFilled,
             tooltip: '', // Tooltip removido para o status 'Preenchida'
+        },
+        'Partial Fill': {
+            icon: <PieChartIcon className="h-4 w-4" />,
+            color: 'text-blue-400',
+            label: t.statusPartialFill,
+            tooltip: t.tooltipPartialFill,
         },
         Error: {
             icon: <CautionIcon className="h-4 w-4" />,
