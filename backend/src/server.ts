@@ -1,4 +1,5 @@
-import express, { ErrorRequestHandler } from 'express';
+// FIX: Aliased express types to resolve conflicts with global DOM types.
+import express, { ErrorRequestHandler as ExpressErrorRequestHandler, Request as ExpressRequest, Response as ExpressResponse, NextFunction as ExpressNextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import * as analysisController from './api/analysisController';
@@ -31,7 +32,8 @@ app.post('/api/analysis/sentiment', analysisController.getSentimentAnalysis);
 
 
 // Basic Error Handling Middleware
-const errorHandler: ErrorRequestHandler = (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+// FIX: Used aliased express types to resolve conflicts.
+const errorHandler: ExpressErrorRequestHandler = (err: any, req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
   console.error(err.stack);
   const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
   res.status(500).json({ message: 'An internal server error occurred', error: errorMessage });

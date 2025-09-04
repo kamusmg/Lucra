@@ -1,4 +1,6 @@
 
+
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { SimulationResult, PresentDayAssetSignal, Horizon, ChartAnalysisResult, SelfAnalysis, ForgeActionPlan, AuditReport, LivePrices, ChartAnalysisRecommendation, BacktestAnalysisResult, PresentDayAnalysisResult, ChecklistResult, GatedSignalResult, MacroIndicator, TacticalIdea, MemeCoinSignal, SentimentAnalysis } from '../types';
 import { LucraSignal } from '../types/lucra';
@@ -293,11 +295,16 @@ const sentimentAnalysisSchema = {
     required: ["assetTicker", "sentimentScore", "sentimentLabel", "dominantNarratives", "intelligenceBriefing"],
 };
 
+interface PerformanceFeedbackData {
+    metricsSummary: string;
+    failureReport: string;
+}
+
 /**
  * Fetches the present-day analysis part of the simulation.
  * This function requires live price data to be passed in.
  */
-export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, totalCapital: number, riskPercentage: number, feedbackDirective?: string): Promise<PresentDayAnalysisResult> => {
+export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, totalCapital: number, riskPercentage: number, feedbackDirective?: PerformanceFeedbackData | null): Promise<PresentDayAnalysisResult> => {
     if (!livePrices || !livePrices['BTC'] || !livePrices['ETH']) {
         throw new Error('Falha ao obter dados críticos de mercado (BTC/ETH). A análise não pode prosseguir.');
     }
@@ -324,10 +331,14 @@ export const fetchPresentDayAnalysis = async (livePrices: LivePrices | null, tot
     `;
 
     const feedbackPrompt = feedbackDirective ? `
-**DIRETIVA DE FEEDBACK DE PERFORMANCE REAL (DO SUPERVISOR) v1.0 - REGRA OBRIGATÓRIA:**
-Alpha, seu desempenho histórico em paper trading nesta sessão é o seguinte:
-${feedbackDirective}
-**AÇÃO:** Você DEVE ajustar sua confiança, seus critérios e sua análise de regime com base neste feedback. Se uma estratégia (ex: VENDA) está com desempenho catastrófico, seja extremamente mais crítico e conservador ao gerar esses sinais. Mencione este ajuste em suas 'presentDayWeaknesses' e justifique como você está a incorporar este feedback para reverter os resultados negativos.
+**DIRETIVA DE FEEDBACK DE PERFORMANCE FORENSE (DO SUPERVISOR) v2.0 - REGRA OBRIGATÓRIA:**
+Alpha, seu desempenho geral está abaixo do aceitável. Analise o seguinte relatório de falhas da sua última sessão de trading:
+${feedbackDirective.failureReport}
+SUA TAREFA:
+
+1.  **Analise os "Drivers Técnicos" de cada falha.** Identifique se há um padrão de indicadores ou setups que estão a levar a perdas consistentes.
+2.  **Ajuste sua Estratégia:** Com base nesta análise, você DEVE ajustar sua lógica para a sessão de hoje. Se um indicador está a falhar consistentemente, reduza o peso que lhe dá.
+3.  **Justifique a Mudança:** No campo 'presentDayStrengths', explique explicitamente como você está a usar as lições do "Relatório de Falhas" para melhorar os sinais de hoje. Exemplo: 'Com base nas falhas anteriores com falsos rompimentos, os sinais de hoje exigem uma confirmação de volume mais forte.'
 ---
 ` : '';
 
@@ -454,7 +465,7 @@ ${feedbackDirective}
  * Executes the first step of the pipeline: fetching raw analysis data.
  * @returns A promise that resolves to the raw PresentDayAnalysisResult.
  */
-export const runFullPipeline = async (totalCapital: number, riskPercentage: number, feedbackDirective?: string): Promise<PresentDayAnalysisResult> => {
+export const runFullPipeline = async (totalCapital: number, riskPercentage: number, feedbackDirective?: PerformanceFeedbackData | null): Promise<PresentDayAnalysisResult> => {
     try {
         const pricesWithSource = await fetchPrices(['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'LTC', 'MATIC', 'DOT']);
         const prices: LivePrices = {};

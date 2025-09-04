@@ -42,6 +42,11 @@ const parseEntryRange = (rangeStr: string | null | undefined): { start: number; 
     return null;
 };
 
+interface PerformanceFeedbackData {
+    metricsSummary: string;
+    failureReport: string;
+}
+
 export interface IDataContext {
     presentDayData: PresentDayAnalysisResult | null;
     backtestData: BacktestAnalysisResult | null;
@@ -258,9 +263,9 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
         });
     }, []);
 
-    const generatePerformanceFeedback = useCallback((): string => {
+    const generatePerformanceFeedback = useCallback((): PerformanceFeedbackData | null => {
         if (completedTrades.length === 0) {
-            return '';
+            return null;
         }
     
         const buyTrades = completedTrades.filter(t => t.signalType === 'COMPRA');
@@ -269,21 +274,34 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
         const buyMetrics = calculateMetrics(buyTrades);
         const sellMetrics = calculateMetrics(sellTrades);
         
-        const feedbackParts = [];
+        let metricsSummary = '';
+        const feedbackParts: string[] = [];
     
         if (buyMetrics.totalTrades > 0) {
-            const profitFactorText = buyMetrics.profitFactor !== null ? buyMetrics.profitFactor.toFixed(2) : '0.00';
+            const profitFactorText = buyMetrics.profitFactor !== null ? buyMetrics.profitFactor.toFixed(2) : 'N/A';
             feedbackParts.push(`COMPRA (Longs) - Taxa de Acerto: ${buyMetrics.winRate.toFixed(0)}%, Fator de Lucro: ${profitFactorText}, Resultado: ${formatCurrency(buyMetrics.totalNetProfit)}.`);
         }
         if (sellMetrics.totalTrades > 0) {
-            const profitFactorText = sellMetrics.profitFactor !== null ? sellMetrics.profitFactor.toFixed(2) : '0.00';
+            const profitFactorText = sellMetrics.profitFactor !== null ? sellMetrics.profitFactor.toFixed(2) : 'N/A';
             feedbackParts.push(`VENDA (Shorts) - Taxa de Acerto: ${sellMetrics.winRate.toFixed(0)}%, Fator de Lucro: ${profitFactorText}, Resultado: ${formatCurrency(sellMetrics.totalNetProfit)}.`);
         }
-    
+        
         if (feedbackParts.length > 0) {
-            return `Feedback de Performance Recente: ${feedbackParts.join(' ')}`;
+            metricsSummary = `Feedback de Performance Recente: ${feedbackParts.join(' ')}`;
         }
-        return '';
+
+        // Find and format the 3 worst losing trades
+        const losers = completedTrades.filter(t => t.outcome === 'Loss');
+        losers.sort((a, b) => a.actualProfitUsd - b.actualProfitUsd); // Sorts by most negative profit
+        const worstThree = losers.slice(0, 3);
+
+        const failureReport = worstThree.length > 0 
+            ? worstThree.map(trade => 
+                `- Trade Perdedor: ${trade.signalType} ${trade.assetName}, Motivo: ${trade.closingReason}, Prejuízo: ${formatCurrency(trade.actualProfitUsd)}. Drivers Técnicos Usados: ${JSON.stringify(trade.technicalDrivers)}`
+            ).join('\n')
+            : "Nenhuma falha registrada na última sessão.";
+    
+        return { metricsSummary, failureReport };
     }, [completedTrades]);
 
     const runFullAnalysis = useCallback(async () => {
@@ -291,16 +309,17 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
         setError(null);
         setPerformanceFeedback(null); // Clear previous feedback
         try {
-            const feedbackDirective = generatePerformanceFeedback();
-            if (feedbackDirective) {
-                setPerformanceFeedback(feedbackDirective); // Set new feedback for display
+            const feedbackData = generatePerformanceFeedback();
+            
+            if (feedbackData && feedbackData.metricsSummary) {
+                setPerformanceFeedback(feedbackData.metricsSummary); // Set new feedback for display
             }
             
             const baseAssetsForSentiment = ['BTC', 'ETH', 'SOL', 'DOGE', 'SHIB', 'PEPE', 'WIF'];
             const uniqueAssetsForSentiment = Array.from(new Set([...baseAssetsForSentiment, ...watchlist]));
             
             const [presentDay, memeCoins, sentiment] = await Promise.all([
-                apiClient.runFullAnalysis(totalCapital, riskPercentage, feedbackDirective),
+                apiClient.runFullAnalysis(totalCapital, riskPercentage, feedbackData),
                 apiClient.fetchMemeCoinAnalysis(),
                 apiClient.fetchSentimentAnalysis(uniqueAssetsForSentiment, language)
             ]);
@@ -385,7 +404,7 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
     
     }, [activeTrades, t.tooltipFilled, t.tooltipPartialFill]);
 
-    // NEW: Trigger Engine for Pending Signals
+    // Trigger Engine for Pending Signals (PROMPT 20 FIX)
     useEffect(() => {
         const triggerInterval = setInterval(async () => {
             const currentPendingSignals = pendingSignalsRef.current;
@@ -393,50 +412,45 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                 return;
             }
 
-            let signalsChanged = false;
-            
-            // 1. Manage Expiration: Remove signals that have passed their exit time
             const now = DateTime.now();
-            const freshSignals = currentPendingSignals.filter(signal => {
+            const freshSignals: PresentDayAssetSignal[] = [];
+            const expiredSignals: PresentDayAssetSignal[] = [];
+
+            // Step 1: Explicitly partition signals into fresh and expired lists.
+            for (const signal of currentPendingSignals) {
                 if (!signal || typeof signal.exitDatetime !== 'string') {
-                    if (signal) console.warn('Pending signal found without string exitDatetime', signal);
-                    return false;
+                    expiredSignals.push(signal); // Treat invalid signals as "expired" for removal.
+                    continue;
                 }
                 try {
                     const exitTime = DateTime.fromFormat(signal.exitDatetime, 'dd/MM/yyyy HH:mm:ss');
-                    if (!exitTime.isValid) {
-                         console.warn('Could not parse date for expiration check', signal.exitDatetime);
-                         return false; // Discard signals with invalid dates
+                    if (exitTime.isValid && exitTime >= now) {
+                        freshSignals.push(signal);
+                    } else {
+                        expiredSignals.push(signal);
                     }
-                    // A signal is fresh if its exit time is in the future.
-                    return exitTime >= now;
                 } catch (e) {
-                    console.warn('Error during date parsing for expiration check', signal.exitDatetime, e);
-                    return false;
+                    console.warn('Error parsing date for expiration check, discarding signal.', signal.exitDatetime, e);
+                    expiredSignals.push(signal);
                 }
-            });
-            
-            if (freshSignals.length !== currentPendingSignals.length) {
-                signalsChanged = true;
             }
-            
+
             const assetsToUpdate = [...new Set(freshSignals.map(s => s.assetName))];
             if (assetsToUpdate.length === 0) {
-                if (signalsChanged) { // All signals expired
+                if (expiredSignals.length > 0) {
                     setPendingSignals([]);
                     localStorage.setItem(PENDING_SIGNALS_KEY, JSON.stringify([]));
                 }
                 return;
             }
-
+            
             try {
                 const prices = await apiClient.fetchPrices(assetsToUpdate);
-                
                 const stillPendingSignals: PresentDayAssetSignal[] = [];
                 const newActiveTrades: ActiveTrade[] = [];
                 const currentPresentDayData = presentDayDataRef.current;
 
-                // 2. Check Triggers
+                // Step 2: Check Triggers on FRESH signals only.
                 for (const signal of freshSignals) {
                     const priceInfo = prices[signal.assetName];
                     const range = parseEntryRange(signal.entryRange);
@@ -445,32 +459,17 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                         const currentPrice = parseFloat(priceInfo.price);
                         
                         let isTriggered = false;
-                        if (signal.signalType === 'COMPRA') {
-                            // A buy signal triggers if the current price drops to or below the HIGHEST price in the entry range.
-                            // This simulates a limit order filling at the top of the desired buy zone or better (lower).
-                            if (currentPrice <= range.end) {
-                                isTriggered = true;
-                            }
-                        } else { // VENDA
-                            // A sell signal triggers if the current price rises to or above the LOWEST price in the entry range.
-                            // This simulates a limit order filling at the bottom of the desired sell zone or better (higher).
-                            if (currentPrice >= range.start) {
-                                isTriggered = true;
-                            }
+                        if (signal.signalType === 'COMPRA' && currentPrice <= range.end) {
+                            isTriggered = true;
+                        } else if (signal.signalType === 'VENDA' && currentPrice >= range.start) {
+                            isTriggered = true;
                         }
-
+    
                         if (isTriggered) {
-                            signalsChanged = true;
-                            // TRIGGER! Create ActiveTrade
-                            const slippageFactor = Math.random() * (MAX_SLIPPAGE_PERCENT / 100); // Always a positive factor
-                            let finalEntryPrice;
-                            if (signal.signalType === 'COMPRA') {
-                                // Slippage makes buy price slightly higher (worse)
-                                finalEntryPrice = currentPrice * (1 + slippageFactor);
-                            } else { // VENDA
-                                // Slippage makes sell price slightly lower (worse)
-                                finalEntryPrice = currentPrice * (1 - slippageFactor);
-                            }
+                            const slippageFactor = Math.random() * (MAX_SLIPPAGE_PERCENT / 100);
+                            const finalEntryPrice = signal.signalType === 'COMPRA' 
+                                ? currentPrice * (1 + slippageFactor) 
+                                : currentPrice * (1 - slippageFactor);
                             
                             const marketRegime = currentPresentDayData?.macroContext?.find(ind => ind.name.toLowerCase().includes('regime'))?.value || 'Indefinido';
                             
@@ -485,19 +484,22 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                                 livePnlPercentage: 0,
                                 orderStatus: 'Pending',
                                 executionDetails: t.statusPending,
-                                isStopAdjusted: false, // Initialize trailing stop flag
-                                marketRegimeAtEntry: marketRegime, // Capture context
+                                isStopAdjusted: false,
+                                marketRegimeAtEntry: marketRegime,
                             });
                         } else {
                             stillPendingSignals.push(signal);
                         }
                     } else {
-                        stillPendingSignals.push(signal); // Keep if price or range is invalid for now
+                        stillPendingSignals.push(signal); // Price not found or invalid range, keep it pending
                     }
                 }
                 
-                // 3. Update states if anything changed
-                if (signalsChanged) {
+                // Step 3: Update states if any signals expired OR any trades were triggered
+                if (expiredSignals.length > 0 || newActiveTrades.length > 0) {
+                    setPendingSignals(stillPendingSignals);
+                    localStorage.setItem(PENDING_SIGNALS_KEY, JSON.stringify(stillPendingSignals));
+                    
                     if (newActiveTrades.length > 0) {
                         addNotification({
                             type: 'positions_opened',
@@ -509,16 +511,13 @@ export const DataProvider: React.FC<{ children: ReactNode, apiClient: ApiClient 
                             return updatedTrades;
                         });
                     }
-                    
-                    setPendingSignals(stillPendingSignals);
-                    localStorage.setItem(PENDING_SIGNALS_KEY, JSON.stringify(stillPendingSignals));
                 }
-
+    
             } catch (error) {
                 console.error("Error during pending signal trigger check:", error);
             }
-        }, 20000); // Check every 20 seconds
-
+        }, 20000);
+    
         return () => clearInterval(triggerInterval);
     }, [apiClient, t, addNotification]);
 

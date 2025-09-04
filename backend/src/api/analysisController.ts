@@ -1,9 +1,16 @@
 // backend/src/api/analysisController.ts
-import express from 'express';
+// FIX: Aliased express types to resolve conflicts with global DOM types (e.g., from lib.dom.d.ts).
+import { Request as ExpressRequest, Response as ExpressResponse, NextFunction as ExpressNextFunction } from 'express';
 import * as geminiService from '../services/geminiService';
 import * as marketService from '../services/marketService';
 import { HorizonKey, HORIZON_LABELS } from '../services/horizonPolicy';
 import type { PresentDayAnalysisResult, BacktestAnalysisResult, LivePrices, Horizon } from '../types';
+
+// Define PerformanceFeedbackData interface to match what geminiService expects.
+interface PerformanceFeedbackData {
+    metricsSummary: string;
+    failureReport: string;
+}
 
 // To cache the full analysis result
 let analysisCache: {
@@ -14,7 +21,7 @@ let analysisCache: {
     backtest: null,
 };
 
-const ensurePresentDayAnalysis = async (totalCapital?: number, riskPercentage?: number, feedbackDirective?: string) => {
+const ensurePresentDayAnalysis = async (totalCapital?: number, riskPercentage?: number, feedbackDirective?: PerformanceFeedbackData | null) => {
     if (!analysisCache.presentDay) {
         analysisCache.presentDay = await geminiService.runFullPipeline(totalCapital || 10000, riskPercentage || 1, feedbackDirective);
         geminiService.setLastPresentDayAnalysis(analysisCache.presentDay);
@@ -29,7 +36,7 @@ const ensureBacktestAnalysis = async () => {
     return analysisCache.backtest;
 };
 
-export const getPresentDayAnalysis = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const getPresentDayAnalysis = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const data = await ensurePresentDayAnalysis();
         res.json(data);
@@ -39,7 +46,7 @@ export const getPresentDayAnalysis = async (req: express.Request, res: express.R
     }
 };
 
-export const getBacktestAnalysis = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const getBacktestAnalysis = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const data = await ensureBacktestAnalysis();
         res.json(data);
@@ -49,9 +56,13 @@ export const getBacktestAnalysis = async (req: express.Request, res: express.Res
     }
 };
 
-export const runFullAnalysis = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const runFullAnalysis = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
-        const { totalCapital = 10000, riskPercentage = 1, feedbackDirective } = req.body;
+        const { totalCapital = 10000, riskPercentage = 1, feedbackDirective }: {
+            totalCapital?: number,
+            riskPercentage?: number,
+            feedbackDirective?: PerformanceFeedbackData | null
+        } = req.body;
         
         // Call the service directly to ensure a fresh run with feedback
         const data = await geminiService.runFullPipeline(totalCapital, riskPercentage, feedbackDirective);
@@ -68,7 +79,7 @@ export const runFullAnalysis = async (req: express.Request, res: express.Respons
     }
 };
 
-export const rerollSignal = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const rerollSignal = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const { signalType, horizon, excludeAssets } = req.body;
         const pricesWithSource = await marketService.fetchPrices(['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'AVAX', 'LTC', 'MATIC', 'DOT']);
@@ -84,7 +95,7 @@ export const rerollSignal = async (req: express.Request, res: express.Response, 
     }
 };
 
-export const refreshHorizon = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const refreshHorizon = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const { horizon, side, count, excludeAssets } = req.body;
         const horizonLabel = HORIZON_LABELS[horizon as HorizonKey];
@@ -98,7 +109,7 @@ export const refreshHorizon = async (req: express.Request, res: express.Response
     }
 };
 
-export const getTacticalAnalysis = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const getTacticalAnalysis = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const { assetTicker, language, horizon } = req.body;
         const priceInfo = await marketService.fetchPriceForTicker(assetTicker);
@@ -113,7 +124,7 @@ export const getTacticalAnalysis = async (req: express.Request, res: express.Res
     }
 };
 
-export const postChartAnalysis = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const postChartAnalysis = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const { base64Image, mimeType, language } = req.body;
         if (!base64Image || !mimeType || !language) {
@@ -127,7 +138,7 @@ export const postChartAnalysis = async (req: express.Request, res: express.Respo
     }
 };
 
-export const postChatMessage = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const postChatMessage = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const { message, presentDayData, backtestData } = req.body;
         const chat = await geminiService.createChatSession(presentDayData, backtestData);
@@ -139,7 +150,7 @@ export const postChatMessage = async (req: express.Request, res: express.Respons
     }
 };
 
-export const getSupervisorDirective = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const getSupervisorDirective = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const { analysis, evolutionPrompt } = req.body;
         const directive = await geminiService.fetchSupervisorDirective(analysis, evolutionPrompt);
@@ -150,7 +161,7 @@ export const getSupervisorDirective = async (req: express.Request, res: express.
     }
 };
 
-export const getRobustnessAudit = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const getRobustnessAudit = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const report = await geminiService.fetchRobustnessAudit();
         res.json(report);
@@ -160,7 +171,7 @@ export const getRobustnessAudit = async (req: express.Request, res: express.Resp
     }
 };
 
-export const getMarketPrices = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const getMarketPrices = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const { tickers } = req.body;
         if (!Array.isArray(tickers)) {
@@ -174,7 +185,7 @@ export const getMarketPrices = async (req: express.Request, res: express.Respons
     }
 };
 
-export const getMemeCoinAnalysis = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const getMemeCoinAnalysis = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const data = await geminiService.fetchMemeCoinAnalysis();
         res.json(data);
@@ -184,7 +195,7 @@ export const getMemeCoinAnalysis = async (req: express.Request, res: express.Res
     }
 };
 
-export const getSentimentAnalysis = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const getSentimentAnalysis = async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => {
     try {
         const { assets, language } = req.body;
         const data = await geminiService.fetchSentimentAnalysis(assets, language);
